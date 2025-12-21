@@ -1,0 +1,123 @@
+{
+  "info": {
+    "name": "User Authentication APIs (Manual + Biometric)",
+    "description": "User registration, login, biometric, and password APIs with JWT",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api/v1/users"
+    },
+    {
+      "key": "token",
+      "value": "PASTE_JWT_TOKEN_HERE"
+    }
+  ],
+  "item": [
+    {
+      "name": "Register Manual User",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/register/manual",
+          "host": ["{{baseUrl}}"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Admin User\",\n  \"email\": \"admin@test.com\",\n  \"password\": \"Admin@123\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Login (Manual)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/login",
+          "host": ["{{baseUrl}}"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"login_type\": \"manual\",\n  \"email\": \"admin@test.com\",\n  \"password\": \"Admin@123\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Login (Biometric)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/login",
+          "host": ["{{baseUrl}}"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"login_type\": \"biometric\",\n  \"email\": \"admin@test.com\",\n  \"biometric_id\": \"BIO123456\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Forgot Password",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/forgot-password",
+          "host": ["{{baseUrl}}"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@test.com\",\n  \"newPassword\": \"NewPassword@123\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Register / Update Biometric (JWT)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/register/biometric",
+          "host": ["{{baseUrl}}"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@test.com\",\n  \"biometric_id\": \"BIO123456\"\n}"
+        }
+      }
+    }
+  ]
+}

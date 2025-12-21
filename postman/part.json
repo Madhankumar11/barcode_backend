@@ -1,0 +1,148 @@
+{
+  "info": {
+    "name": "Part Master APIs (JWT Secured)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Part Master APIs with JWT authentication"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api/v1/master/parts"
+    },
+    {
+      "key": "token",
+      "value": "PASTE_JWT_TOKEN_HERE"
+    }
+  ],
+  "item": [
+    {
+      "name": "Create Part",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}",
+          "host": ["{{baseUrl}}"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"part_name\": \"Bolt\",\n  \"part_number\": \"PN-1001\",\n  \"tag_quantity\": 25\n}"
+        }
+      }
+    },
+    {
+      "name": "Get Parts (Pagination + Search)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}?page=1&limit=10&search=bolt",
+          "host": ["{{baseUrl}}"],
+          "query": [
+            { "key": "page", "value": "1" },
+            { "key": "limit", "value": "10" },
+            { "key": "search", "value": "bolt" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Update Part",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/{{partMongoId}}",
+          "host": ["{{baseUrl}}"],
+          "variable": [
+            {
+              "key": "partMongoId",
+              "value": "PASTE_PART_OBJECT_ID"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"tag_quantity\": 40\n}"
+        }
+      }
+    },
+    {
+      "name": "Delete Part",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/{{partMongoId}}",
+          "host": ["{{baseUrl}}"],
+          "variable": [
+            {
+              "key": "partMongoId",
+              "value": "PASTE_PART_OBJECT_ID"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Part ID Dropdown",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/dropdown/part-id",
+          "host": ["{{baseUrl}}"]
+        }
+      }
+    },
+    {
+      "name": "Part Name Dropdown",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/dropdown/part-name",
+          "host": ["{{baseUrl}}"]
+        }
+      }
+    }
+  ]
+}
