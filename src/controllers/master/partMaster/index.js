@@ -23,3 +23,9 @@ export const getPartIdDropdown = async (req, res) => {
 export const getPartNameDropdown = async (req, res) => {
   return service.getPartNameDropdown(req, res);
 };
+
+export const getByIdPart = async (req, res) => {
+  return service.getByIdPart(req, res);
+};
+
+

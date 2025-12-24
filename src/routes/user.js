@@ -4,7 +4,8 @@ import {
   registerOrUpdateBiometric,
   loginUser,
   forgotPassword,
-  changePassword
+  changePassword,
+  refreshAccessToken
 } from "../controllers/master/userMaster/index.js";
 
 
@@ -19,6 +20,7 @@ router.post("/forgot-password", forgotPassword);
 
 router.post("/change/password", forgotPassword);
 
+router.post("/auth/refresh-token", refreshAccessToken);
 
 router.post("/register/biometric", registerOrUpdateBiometric);
 

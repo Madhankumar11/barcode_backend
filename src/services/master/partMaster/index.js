@@ -256,14 +256,18 @@ export const deletePart = async (req, res) => {
 
 export const getPartIdDropdown = async (req, res) => {
   try {
-    const data = await Part.distinct("part_number", { isDeleted: false });
+    const parts = await Part.find(
+      { isDeleted: false },
+      { _id: 0, part_number: 1, part_name: 1 }
+    ).sort({ part_name: 1 });
 
     return res.status(200).json({
       status: "success",
       code: 200,
-      message: "Part ID dropdown fetched successfully",
-      data
+      message: "Part dropdown fetched successfully",
+      data: parts
     });
+
   } catch (error) {
     return res.status(500).json({
       status: "error",
@@ -283,6 +287,48 @@ export const getPartNameDropdown = async (req, res) => {
       code: 200,
       message: "Part name dropdown fetched successfully",
       data
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: "error",
+      code: 500,
+      message: error.message,
+      data: "None"
+    });
+  }
+};
+
+export const getByIdPart = async (req, res) => {
+  try {
+    const { id } = req.query;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        status: "error",
+        code: 400,
+        message: "Invalid part id",
+        data: "None"
+      });
+    }
+
+    const data = await Part.findOne(
+      { _id: id, isDeleted: false },
+    )
+
+    if (!data) {
+      return res.status(404).json({
+        status: "error",
+        code: 404,
+        message: "Part not found",
+        data: "None"
+      });
+    }
+
+    return res.status(200).json({
+      status: "success",
+      code: 200,
+      message:"Data fetched successfully",
+      data: data
     });
   } catch (error) {
     return res.status(500).json({

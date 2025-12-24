@@ -127,18 +127,28 @@ export const loginUser = async (req, res) => {
       }
     }
 
-    const token = jwt.sign(
+    const accessToken = jwt.sign(
       { user_id: user.user_id, email: user.email },
       process.env.JWT_SECRET,
-      { expiresIn: "1d" }
+      { expiresIn: "15m" }
+    );
+
+    const refreshToken = jwt.sign(
+      { user_id: user.user_id },
+      process.env.REFRESH_TOKEN_SECRET,
+      { expiresIn: "1y" }
     );
 
     return res.status(200).json({
       status: "success",
       code: 200,
       message: "Login successful",
-      data: { token }
+      data: {
+        accessToken,
+        refreshToken
+      }
     });
+
   } catch (e) {
     return res.status(500).json({
       status: "error",
@@ -148,6 +158,64 @@ export const loginUser = async (req, res) => {
     });
   }
 };
+
+export const refreshAccessToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(401).json({
+        status: "error",
+        code: 401,
+        message: "Refresh token is required",
+        data: "None"
+      });
+    }
+
+    const decoded = jwt.verify(
+      refreshToken,
+      process.env.REFRESH_TOKEN_SECRET
+    );
+
+    const user = await User.findOne({
+      user_id: decoded.user_id,
+      isActive: true
+    });
+
+    if (!user) {
+      return res.status(401).json({
+        status: "error",
+        code: 401,
+        message: "User not found or inactive",
+        data: "None"
+      });
+    }
+
+    const newAccessToken = jwt.sign(
+      { user_id: user.user_id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "15m" }
+    );
+
+    return res.status(200).json({
+      status: "success",
+      code: 200,
+      message: "Access token refreshed successfully",
+      data: {
+        accessToken: newAccessToken
+      }
+    });
+
+  } catch (error) {
+    return res.status(401).json({
+      status: "error",
+      code: 401,
+      message: "Invalid or expired refresh token",
+      data: "None"
+    });
+  }
+};
+
 
 
 export const forgotPassword = async (req, res) => {

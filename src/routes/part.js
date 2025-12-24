@@ -5,7 +5,8 @@ import {
   updatePart,
   deletePart,
   getPartIdDropdown,
-  getPartNameDropdown
+  getPartNameDropdown,
+  getByIdPart
 } from "../controllers/master/partMaster/index.js";
 
 import { verifyToken } from "../middleware/authentication.js";
@@ -23,5 +24,8 @@ router.delete("/delete/:id", verifyToken, deletePart);
 router.get("/dropdown/part-number", verifyToken, getPartIdDropdown);
 
 router.get("/dropdown/part-name", verifyToken, getPartNameDropdown);
+
+router.get("/getByid", verifyToken, getByIdPart);
+
 
 export default router;

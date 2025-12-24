@@ -14,3 +14,7 @@ export const forgotPassword = (req, res) =>
 
 export const changePassword = (req, res) =>
   service.changePassword(req, res);
+
+export const refreshAccessToken = (req, res) =>
+  service.refreshAccessToken(req, res);
+
