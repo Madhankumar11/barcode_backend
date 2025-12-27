@@ -1,10 +1,10 @@
 import * as service from "../../../services/master/userMaster/index.js";
 
-export const registerManualUser = (req, res) =>
-  service.registerManualUser(req, res);
+export const registerUser = (req, res) =>
+  service.registerUser(req, res);
 
-export const registerOrUpdateBiometric = (req, res) =>
-  service.registerOrUpdateBiometric(req, res);
+export const updateUser = (req, res) =>
+  service.updateUser(req, res);
 
 export const loginUser = (req, res) =>
   service.loginUser(req, res);

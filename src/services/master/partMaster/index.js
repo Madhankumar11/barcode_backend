@@ -1,13 +1,46 @@
 import { v4 as uuidv4 } from "uuid";
 import mongoose from "mongoose";
 import Part from "../../../models/part.js";
+import User from "../../../models/user.js";
 
 export const createPart = async (req, res) => {
   try {
-    const { part_name, part_number, tag_quantity } = req.body;
+    const { part_name, part_number, tag_quantity,minda_number, user_id } = req.body;
+
+    if (!user_id) {
+      return res.status(200).json({
+        status: "error",
+        code: 400,
+        message: "user_id is required",
+        data: "None"
+      });
+    }
+
+    const user = await User.findOne({
+      user_id,
+      isActive: true
+    });
+
+    if (!user) {
+      return res.status(200).json({
+        status: "error",
+        code: 403,
+        message: "User not found or inactive",
+        data: "None"
+      });
+    }
+
+    if (!user.permissions?.createPart) {
+      return res.status(200).json({
+        status: "error",
+        code: 403,
+        message: "You do not have permission to create part",
+        data: "None"
+      });
+    }
 
     if (!part_name || typeof part_name !== "string") {
-      return res.status(400).json({
+      return res.status(200).json({
         status: "error",
         code: 400,
         message: "part_name is required and must be a string",
@@ -15,8 +48,9 @@ export const createPart = async (req, res) => {
       });
     }
 
+
     if (!part_number || typeof part_number !== "string") {
-      return res.status(400).json({
+      return res.status(200).json({
         status: "error",
         code: 400,
         message: "part_number is required and must be a string",
@@ -24,13 +58,14 @@ export const createPart = async (req, res) => {
       });
     }
 
+
     if (
       tag_quantity === undefined ||
       tag_quantity === null ||
       isNaN(tag_quantity) ||
       Number(tag_quantity) < 0
     ) {
-      return res.status(400).json({
+      return res.status(200).json({
         status: "error",
         code: 400,
         message: "tag_quantity must be a valid non-negative number",
@@ -39,13 +74,13 @@ export const createPart = async (req, res) => {
     }
 
     const exists = await Part.findOne({
-      part_name: part_name.trim(),
-      part_number: part_number.trim(),
+      part_name: part_name,
+      part_number: part_number,
       isDeleted: false
     });
 
     if (exists) {
-      return res.status(409).json({
+      return res.status(200).json({
         status: "error",
         code: 409,
         message: "Part already exists",
@@ -55,18 +90,21 @@ export const createPart = async (req, res) => {
 
     const part = await Part.create({
       part_id: uuidv4(),
-      part_name: part_name.trim(),
-      part_number: part_number.trim(),
+      part_name: part_name,
+      part_number: part_number,
+      minda_number: minda_number,
       tag_quantity: Number(tag_quantity),
-      isDeleted: false
+      isDeleted: false,
+      createdBy: user_id
     });
 
-    return res.status(201).json({
+    return res.status(200).json({
       status: "success",
       code: 201,
       message: "Part created successfully",
       data: part
     });
+
   } catch (error) {
     return res.status(500).json({
       status: "error",
@@ -76,6 +114,7 @@ export const createPart = async (req, res) => {
     });
   }
 };
+
 
 export const getParts = async (req, res) => {
   try {
@@ -131,23 +170,47 @@ export const getParts = async (req, res) => {
 
 export const updatePart = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { part_name, part_number, tag_quantity } = req.body;
+    const { id } = req.query;
+    const { part_name, part_number, tag_quantity, user_id,minda_number } = req.body;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
+    if (!user_id) {
+      return res.status(200).json({
         status: "error",
         code: 400,
-        message: "Invalid part id",
+        message: "user_id is required",
         data: "None"
       });
     }
 
+    const user = await User.findOne({
+      user_id,
+      isActive: true
+    });
+
+    if (!user) {
+      return res.status(200).json({
+        status: "error",
+        code: 403,
+        message: "User not found or inactive",
+        data: "None"
+      });
+    }
+
+    if (!user.permissions?.createPart) {
+      return res.status(200).json({
+        status: "error",
+        code: 403,
+        message: "You do not have permission to update part",
+        data: "None"
+      });
+    }
+
+    
     if (
       tag_quantity !== undefined &&
       (isNaN(tag_quantity) || Number(tag_quantity) < 0)
     ) {
-      return res.status(400).json({
+      return res.status(200).json({
         status: "error",
         code: 400,
         message: "tag_quantity must be a valid non-negative number",
@@ -158,13 +221,13 @@ export const updatePart = async (req, res) => {
     if (part_name || part_number) {
       const duplicate = await Part.findOne({
         _id: { $ne: id },
-        part_name: part_name?.trim(),
-        part_number: part_number?.trim(),
+        ...(part_name && { part_name: part_name.trim() }),
+        ...(part_number && { part_number: part_number.trim() }),
         isDeleted: false
       });
 
       if (duplicate) {
-        return res.status(409).json({
+        return res.status(200).json({
           status: "error",
           code: 409,
           message: "Another part already exists with same name and number",
@@ -174,19 +237,21 @@ export const updatePart = async (req, res) => {
     }
 
     const updated = await Part.findOneAndUpdate(
-      { _id: id, isDeleted: false },
+      { part_id: id, isDeleted: false },
       {
-        ...(part_name && { part_name: part_name.trim() }),
-        ...(part_number && { part_number: part_number.trim() }),
+        ...(part_name && { part_name: part_name }),
+        ...(part_number && { part_number: part_number }),
+        ...(minda_number && { minda_number: minda_number }),
         ...(tag_quantity !== undefined && {
           tag_quantity: Number(tag_quantity)
-        })
+        }),
+        updatedBy: user_id
       },
       { new: true }
     );
 
     if (!updated) {
-      return res.status(404).json({
+      return res.status(200).json({
         status: "error",
         code: 404,
         message: "Part not found",
@@ -200,6 +265,7 @@ export const updatePart = async (req, res) => {
       message: "Part updated successfully",
       data: updated
     });
+
   } catch (error) {
     return res.status(500).json({
       status: "error",
@@ -210,27 +276,29 @@ export const updatePart = async (req, res) => {
   }
 };
 
+
 export const deletePart = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { id } = req.query;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
+    
+    if (!id) {
+      return res.status(200).json({
         status: "error",
         code: 400,
-        message: "Invalid part id",
+        message: "id is required",
         data: "None"
       });
     }
-
+   
     const deleted = await Part.findOneAndUpdate(
-      { _id: id, isDeleted: false },
+      { part_id: id, isDeleted: false },
       { isDeleted: true },
       { new: true }
     );
 
     if (!deleted) {
-      return res.status(404).json({
+      return res.status(200).json({
         status: "error",
         code: 404,
         message: "Part not found",
@@ -302,21 +370,31 @@ export const getByIdPart = async (req, res) => {
   try {
     const { id } = req.query;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
+    
+    if (!id) {
+      return res.status(200).json({
         status: "error",
         code: 400,
-        message: "Invalid part id",
+        message: "id is required",
         data: "None"
       });
     }
 
+    if(!id){
+      return res.status(200).json({
+        status: "error",
+        code: 400,
+        message: "Part not found",
+        data: "None"
+      }); 
+    }
+
     const data = await Part.findOne(
-      { _id: id, isDeleted: false },
+      { part_id: id, isDeleted: false },
     )
 
     if (!data) {
-      return res.status(404).json({
+      return res.status(200).json({
         status: "error",
         code: 404,
         message: "Part not found",
@@ -330,6 +408,73 @@ export const getByIdPart = async (req, res) => {
       message:"Data fetched successfully",
       data: data
     });
+  } catch (error) {
+    return res.status(500).json({
+      status: "error",
+      code: 500,
+      message: error.message,
+      data: "None"
+    });
+  }
+};
+
+
+export const filterPart = async (req, res) => {
+  try {
+    const {
+      user_id,
+      part_name,
+      part_number,
+      minda_number,
+      page = 1,
+      limit = 10
+    } = req.query;
+
+    if (!user_id) {
+      return res.status(200).json({
+        status: "error",
+        code: 400,
+        message: "user_id is required",
+        data: "None"
+      });
+    }
+
+    const user = await User.findOne({ user_id, isActive: true });
+    if (!user || !user.permissions?.createTransaction) {
+      return res.status(200).json({
+        status: "error",
+        code: 403,
+        message: "Permission denied",
+        data: "None"
+      });
+    }
+
+    const filter = { isDeleted: false };
+
+    if (part_name) {
+      filter.part_name = { $regex: part_name, $options: "i" };
+    }
+
+    if (part_number) {
+      filter.part_number = { $regex: part_number, $options: "i" };
+    }
+
+    if (minda_number) {
+      filter.minda_number = { $regex: minda_number, $options: "i" };
+    }
+
+    const parts = await Part.find(filter)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(Number(limit));
+
+    return res.status(200).json({
+      status: "success",
+      code: 200,
+      message: "Parts filtered successfully",
+      data: parts
+    });
+
   } catch (error) {
     return res.status(500).json({
       status: "error",

@@ -6,7 +6,7 @@ import connectDB from "./config/db.js";
 import partRoutes from "./routes/part.js";
 import typeRoutes from "./routes/type.js";
 import userRoutes from "./routes/user.js";
-import transactionRoutes from "./routes/user.js";
+import transactionRoutes from "./routes/transaction.js";
 import cors from "cors"
 
 dotenv.config();

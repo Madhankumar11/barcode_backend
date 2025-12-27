@@ -1,9 +1,20 @@
-
 import express from "express";
-import {createTxn} from "../controllers/transection/index.js";
+import {
+  createOrUpdateTransaction,
+  listTransactions,
+  getTransactionById,
+  deleteTransaction,
+  filterTransactions,
+  searchTransactions
+} from "../controllers/transection/index.js";
 
-const r=express.Router();
+const router = express.Router();
 
-r.post("/",createTxn);
+router.post("/create", createOrUpdateTransaction);
+router.get("/list", listTransactions);
+router.get("/filter", filterTransactions);
+router.get("/search", searchTransactions);
+router.get("/getByid", getTransactionById);
+router.delete("/delete", deleteTransaction);
 
-export default r;
+export default router;

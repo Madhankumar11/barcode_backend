@@ -1,7 +1,7 @@
 import express from "express";
 import {
-  registerManualUser,
-  registerOrUpdateBiometric,
+  registerUser,
+  updateUser,
   loginUser,
   forgotPassword,
   changePassword,
@@ -12,7 +12,7 @@ import {
 const router = express.Router();
 
 
-router.post("/register/manual", registerManualUser);
+router.post("/register", registerUser);
 
 router.post("/login", loginUser);
 
@@ -22,6 +22,6 @@ router.post("/change/password", forgotPassword);
 
 router.post("/auth/refresh-token", refreshAccessToken);
 
-router.post("/register/biometric", registerOrUpdateBiometric);
+router.post("/register/update", updateUser);
 
 export default router;

@@ -28,4 +28,8 @@ export const getByIdPart = async (req, res) => {
   return service.getByIdPart(req, res);
 };
 
+export const filterPart = async (req, res) => {
+  return service.filterPart(req, res);
+};
+
 
