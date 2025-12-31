@@ -5,8 +5,11 @@ import {
   getTransactionById,
   deleteTransaction,
   filterTransactions,
-  searchTransactions
+  searchTransactions,
+  
 } from "../controllers/transection/index.js";
+
+import {generateTransactionReport} from "../controllers/report/index.js"
 
 const router = express.Router();
 
@@ -16,5 +19,6 @@ router.get("/filter", filterTransactions);
 router.get("/search", searchTransactions);
 router.get("/getByid", getTransactionById);
 router.delete("/delete", deleteTransaction);
+router.post("/report", generateTransactionReport)
 
 export default router;

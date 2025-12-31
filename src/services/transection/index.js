@@ -119,103 +119,103 @@ export const createOrUpdateTransaction = async (req, res) => {
   }
 };
 
-// export const printTransactionLabel = async (req, res) => {
-//   try {
-//     const {
-//       part_name,
-//       part_number,
-//       minda_number,
-//       qty,
-//       date,
-//       serial_numbers
-//     } = req.body;
+export const printTransactionLabel = async (req, res) => {
+  try {
+    const {
+      part_name,
+      part_number,
+      minda_number,
+      qty,
+      date,
+      serial_numbers
+    } = req.body;
 
-//     if (
-//       !part_name ||
-//       !part_number ||
-//       !minda_number ||
-//       !qty ||
-//       !Array.isArray(serial_numbers)
-//     ) {
-//       return res.status(200).json({
-//         status: "error",
-//         code: 400,
-//         message: "Missing required label data",
-//         data: "None"
-//       });
-//     }
+    if (
+      !part_name ||
+      !part_number ||
+      !minda_number ||
+      !qty ||
+      !Array.isArray(serial_numbers)
+    ) {
+      return res.status(200).json({
+        status: "error",
+        code: 400,
+        message: "Missing required label data",
+        data: "None"
+      });
+    }
 
-//     const qrData = JSON.stringify({
-//       part_name,
-//       part_number,
-//       minda_number,
-//       serial_numbers
-//     });
+    const qrData = JSON.stringify({
+      part_name,
+      part_number,
+      minda_number,
+      serial_numbers
+    });
 
-//     const tspl = `
-// SIZE 100 mm,80 mm
-// GAP 2 mm,0
-// DENSITY 8
-// SPEED 4
-// DIRECTION 1
-// CLS
+    const tspl = `
+SIZE 100 mm,80 mm
+GAP 2 mm,0
+DENSITY 8
+SPEED 4
+DIRECTION 1
+CLS
 
-// TEXT 40,40,"0",0,2,2,"UNO MINDA LTD - Lighting Division"
-// TEXT 40,90,"0",0,2,2,"Chennai"
+TEXT 40,40,"0",0,2,2,"UNO MINDA LTD - Lighting Division"
+TEXT 40,90,"0",0,2,2,"Chennai"
 
-// TEXT 40,160,"0",0,2,2,"Part Name"
-// TEXT 320,160,"0",0,2,2,"${part_name}"
+TEXT 40,160,"0",0,2,2,"Part Name"
+TEXT 320,160,"0",0,2,2,"${part_name}"
 
-// TEXT 40,220,"0",0,2,2,"Cus' Part No"
-// TEXT 320,220,"0",0,2,2,"${part_number}"
+TEXT 40,220,"0",0,2,2,"Cus' Part No"
+TEXT 320,220,"0",0,2,2,"${part_number}"
 
-// TEXT 40,280,"0",0,2,2,"Minda Part No"
-// TEXT 320,280,"0",0,2,2,"${minda_number}"
+TEXT 40,280,"0",0,2,2,"Minda Part No"
+TEXT 320,280,"0",0,2,2,"${minda_number}"
 
-// TEXT 40,340,"0",0,2,2,"Date of Insp + PKG"
-// TEXT 320,340,"0",0,2,2,"${date}"
+TEXT 40,340,"0",0,2,2,"Date of Insp + PKG"
+TEXT 320,340,"0",0,2,2,"${date}"
 
-// TEXT 40,400,"0",0,2,2,"Qty/BOX"
-// TEXT 320,400,"0",0,2,2,"${qty}"
+TEXT 40,400,"0",0,2,2,"Qty/BOX"
+TEXT 320,400,"0",0,2,2,"${qty}"
 
-// QRCODE 720,170,L,6,A,0,"${qrData}"
+QRCODE 720,170,L,6,A,0,"${qrData}"
 
-// TEXT 720,520,"0",0,1,1,"Scan QR Code for part details."
+TEXT 720,520,"0",0,1,1,"Scan QR Code for part details."
 
-// PRINT 1,1
-// `;
+PRINT 1,1
+`;
 
-//     printer.printDirect({
-//       data: tspl,
-//       type: "RAW",
-//       printer: "TSC TE244",
-//       success: jobID => {
-//         return res.status(200).json({
-//           status: "success",
-//           code: 200,
-//           message: "Label sent to printer successfully",
-//           data: { jobID }
-//         });
-//       },
-//       error: err => {
-//         return res.status(200).json({
-//           status: "error",
-//           code: 500,
-//           message: "Printer error",
-//           data: err.message
-//         });
-//       }
-//     });
+    printer.printDirect({
+      data: tspl,
+      type: "RAW",
+      printer: "TSC TE210",
+      success: jobID => {
+        return res.status(200).json({
+          status: "success",
+          code: 200,
+          message: "Label sent to printer successfully",
+          data: { jobID }
+        });
+      },
+      error: err => {
+        return res.status(200).json({
+          status: "error",
+          code: 500,
+          message: "Printer error",
+          data: err.message
+        });
+      }
+    });
 
-//   } catch (error) {
-//     return res.status(200).json({
-//       status: "error",
-//       code: 500,
-//       message: error.message,
-//       data: "None"
-//     });
-//   }
-// };
+  } catch (error) {
+    return res.status(200).json({
+      status: "error",
+      code: 500,
+      message: error.message,
+      data: "None"
+    });
+  }
+};
 
 export const listTransactions = async (req, res) => {
   try {

@@ -5,7 +5,10 @@ import {
   loginUser,
   forgotPassword,
   changePassword,
-  refreshAccessToken
+  refreshAccessToken,
+  getUserById,
+  deleteUser,
+  listUsers
 } from "../controllers/master/userMaster/index.js";
 
 
@@ -23,5 +26,12 @@ router.post("/change/password", forgotPassword);
 router.post("/auth/refresh-token", refreshAccessToken);
 
 router.post("/register/update", updateUser);
+
+router.get("/getById", getUserById);
+
+router.delete("/delete",deleteUser);
+
+router.get("/list", listUsers);
+
 
 export default router;

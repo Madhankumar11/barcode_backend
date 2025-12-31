@@ -18,3 +18,12 @@ export const changePassword = (req, res) =>
 export const refreshAccessToken = (req, res) =>
   service.refreshAccessToken(req, res);
 
+export const getUserById = (req, res) =>
+  service.getUserById(req, res);
+
+export const deleteUser = (req, res) =>
+  service.deleteUser(req, res);
+
+export const listUsers = (req, res) =>
+  service.listUsers(req, res);
+

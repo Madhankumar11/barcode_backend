@@ -5,7 +5,7 @@ import User from "../../../models/user.js";
 
 export const createPart = async (req, res) => {
   try {
-    const { part_name, part_number, tag_quantity,minda_number, user_id } = req.body;
+    const { part_name, part_number,type,tag_quantity,minda_number, user_id } = req.body;
 
     if (!user_id) {
       return res.status(200).json({
@@ -93,6 +93,7 @@ export const createPart = async (req, res) => {
       part_name: part_name,
       part_number: part_number,
       minda_number: minda_number,
+      type: type,
       tag_quantity: Number(tag_quantity),
       isDeleted: false,
       createdBy: user_id
@@ -171,7 +172,7 @@ export const getParts = async (req, res) => {
 export const updatePart = async (req, res) => {
   try {
     const { id } = req.query;
-    const { part_name, part_number, tag_quantity, user_id,minda_number } = req.body;
+    const { part_name, part_number, tag_quantity, user_id,minda_number,type } = req.body;
 
     if (!user_id) {
       return res.status(200).json({
@@ -242,6 +243,7 @@ export const updatePart = async (req, res) => {
         ...(part_name && { part_name: part_name }),
         ...(part_number && { part_number: part_number }),
         ...(minda_number && { minda_number: minda_number }),
+        ...(type && { type: type }),
         ...(tag_quantity !== undefined && {
           tag_quantity: Number(tag_quantity)
         }),

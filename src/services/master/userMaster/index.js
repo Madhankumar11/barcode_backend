@@ -23,7 +23,7 @@ export const registerUser = async (req, res) => {
         status: "error",
         code: 400,
         message:
-          "email, role, department, phoneNumber and createdBy are required",
+          "email, role, department, user_name, phoneNumber and createdBy are required",
         data: "None"
       });
     }
@@ -51,7 +51,7 @@ export const registerUser = async (req, res) => {
       });
     }
 
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email,isDeleted:false });
     if (existingUser) {
       return res.status(200).json({
         status: "error",
@@ -514,3 +514,122 @@ export const changePassword = async (req, res) => {
     });
   }
 };
+
+export const getUserById = async (req, res) => {
+  try {
+    const { user_id } = req.query;
+
+    const user = await User.findOne(
+      { user_id, isActive: true },
+      { password: 0 }
+    );
+
+    if (!user) {
+      return res.status(200).json({
+        status: "error",
+        code: 404,
+        message: "User not found",
+        data: "None"
+      });
+    }
+
+    return res.status(200).json({
+      status: "success",
+      code: 200,
+      message: "User fetched successfully",
+      data: user
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: "error",
+      code: 500,
+      message: error.message,
+      data: "None"
+    });
+  }
+};
+
+export const deleteUser = async (req, res) => {
+  try {
+    const { user_id } = req.query;
+
+    const user = await User.findOneAndUpdate(
+      { user_id, isActive: true },
+      {
+        isActive: false,
+        isDeleted: true
+      },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(200).json({
+        status: "error",
+        code: 404,
+        message: "User not found or already deleted",
+        data: "None"
+      });
+    }
+
+    return res.status(200).json({
+      status: "success",
+      code: 200,
+      message: "User deleted successfully",
+      data: "None"
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: "error",
+      code: 500,
+      message: error.message,
+      data: "None"
+    });
+  }
+};
+
+export const listUsers = async (req, res) => {
+  try {
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = Math.min(parseInt(req.query.limit) || 10, 100);
+
+    const skip = (page - 1) * limit;
+
+    const filter = {
+      isActive: true
+    };
+
+    const [users, total] = await Promise.all([
+      User.find(filter, { password: 0 })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+
+      User.countDocuments(filter)
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return res.status(200).json({
+      status: "success",
+      code: 200,
+      message: "Users fetched successfully",
+      data: {
+        users,
+        pagination: {
+          totalRecords: total,
+          totalPages,
+          currentPage: page,
+          pageSize: limit
+        }
+      }
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: "error",
+      code: 500,
+      message: error.message,
+      data: "None"
+    });
+  }
+};
+

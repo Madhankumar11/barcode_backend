@@ -23,6 +23,10 @@ const partSchema = new mongoose.Schema(
       min: 0
     },
 
+    type: {
+      type: String,
+    },
+
     createdBy: {
       type: String,
     },
