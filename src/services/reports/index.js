@@ -50,6 +50,7 @@ export const generateTransactionReport = async (req, res) => {
         $lte: new Date(toDate)
       };
     }
+    
 
     const transactions = await Transaction.find(filter).sort({ createdAt: -1 });
 

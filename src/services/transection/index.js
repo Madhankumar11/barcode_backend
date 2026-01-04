@@ -6,19 +6,21 @@ import User from "../../models/user.js";
 import Part from "../../models/part.js";
 import Transaction from "../../models/transection.js"
 import { createCanvas, loadImage } from "canvas";
-// import printer from "printer";
+import { log } from "console";
+
+const normalize = (str = "") =>
+  str.replace(/\s+/g, " ").trim().toUpperCase();
 
 
-
-export const createOrUpdateTransaction = async (req, res) => {
+export const startTransaction = async (req, res) => {
   try {
-    const { user_id, part_id, scanned_values = [], is_completed } = req.body;
+    const { user_id, part_id, part_number } = req.body;
 
-    if (!user_id || !part_id || !Array.isArray(scanned_values)) {
+    if (!user_id || !part_id || !part_number) {
       return res.status(200).json({
         status: "error",
         code: 400,
-        message: "user_id, part_id and scanned_values are required",
+        message: "user_id, part_id and part_number are required",
         data: "None"
       });
     }
@@ -28,12 +30,12 @@ export const createOrUpdateTransaction = async (req, res) => {
       return res.status(200).json({
         status: "error",
         code: 403,
-        message: "User does not have permission to create transaction",
+        message: "User does not have permission to start transaction",
         data: "None"
       });
     }
 
-    const part = await Part.findOne({ part_id, isDeleted: false });
+    const part = await Part.findOne({ part_id, part_number, isDeleted: false });
     if (!part) {
       return res.status(200).json({
         status: "error",
@@ -43,70 +45,37 @@ export const createOrUpdateTransaction = async (req, res) => {
       });
     }
 
-    for (const item of scanned_values) {
-      if (
-        item.part_name !== part.part_name ||
-        item.part_number !== part.part_number ||
-        item.minda_number !== part.minda_number
-      ) {
-        return res.status(200).json({
-          status: "error",
-          code: 400,
-          message: "Scanned values do not match part master",
-          data: item
-        });
-      }
-    }
 
-    let transaction = await Transaction.findOne({ part_id });
-
-    const scannedSerials = scanned_values
-      .map(v => v.serial_number)
-      .filter(Boolean);
-
-    if (!transaction) {
-      transaction = await Transaction.create({
-        transaction_id: uuidv4(),
-        part_id,
-        part_name: part.part_name,
-        part_number: part.part_number,
-        minda_number: part.minda_number,
-        serial_numbers: scannedSerials,
-        is_completed: false,
-        createdBy: user_id
-      });
-    } else {
-      const merged = new Set([
-        ...transaction.serial_numbers,
-        ...scannedSerials
-      ]);
-      transaction.serial_numbers = [...merged];
-    }
-
-    if (is_completed === true) {
-      if (transaction.serial_numbers.length !== part.tag_quantity) {
-        return res.status(200).json({
-          status: "error",
-          code: 400,
-          message: "Serial number count does not match tag quantity",
-          data: {
-            expected: part.tag_quantity,
-            actual: transaction.serial_numbers.length
-          }
-        });
-      }
-
-
-      transaction.is_completed = true;
-    }
-
-    await transaction.save();
+    const transaction = await Transaction.create({
+      transaction_id: uuidv4(),
+      part_id,
+      part_name: part.part_name,
+      part_number: part.part_number,
+      minda_number: part.minda_number,
+      required_quantity: part.tag_quantity,
+      type: part.type,
+      scanned_quantity: 0,
+      scanned_barcodes: [],
+      serial_numbers: [],
+      is_completed: false,
+      createdBy: user_id
+    });
 
     return res.status(200).json({
       status: "success",
       code: 200,
-      message: "Transaction processed successfully",
-      data: transaction
+      message: "Transaction started successfully",
+      data: {
+        transaction_id: transaction.transaction_id,
+        part_number: part.part_number,
+        part_name: part.part_name,
+        minda_number:part.minda_number,
+        type: part.type,
+        required_quantity: part.tag_quantity,
+        scanned: 0,
+        scanned_barcodes: [],
+        created_at: transaction.createdAt
+      }
     });
 
   } catch (error) {
@@ -118,6 +87,281 @@ export const createOrUpdateTransaction = async (req, res) => {
     });
   }
 };
+
+
+export const recordScan = async (req, res) => {
+  try {
+    const { transaction_id, barcode, user_id } = req.body;
+
+    if (!transaction_id || !barcode || !user_id) {
+      return res.status(200).json({
+        status: "error",
+        code: 400,
+        message: "transaction_id, barcode and user_id are required",
+        data: "None"
+      });
+    }
+
+    const transaction = await Transaction.findOne({
+      transaction_id,
+      isDeleted: false
+    });
+
+    if (!transaction || transaction.is_completed) {
+      return res.status(200).json({
+        status: "error",
+        code: 404,
+        message: "Active transaction not found",
+        data: "None"
+      });
+    }
+
+    const part = await Part.findOne({ part_id: transaction.part_id });
+    if (!part) {
+      return res.status(200).json({
+        status: "error",
+        code: 404,
+        message: "Part not found",
+        data: "None"
+      });
+    }
+
+    const scannedText = normalize(barcode);
+
+    const validations = {
+      part_name: normalize(part.part_name),
+      part_number: normalize(part.part_number),
+      minda_number: normalize(part.minda_number),
+      type: normalize(part.type)
+    };
+
+    const mismatchedFields = [];
+
+    for (const [key, value] of Object.entries(validations)) {
+      if (!scannedText.includes(value)) {
+        mismatchedFields.push({
+          field: key,
+          expected: part[key],
+          scanned: barcode
+        });
+      }
+    }
+
+    if (mismatchedFields.length > 0) {
+      return res.status(200).json({
+        status: "error",
+        code: 400,
+        message: "Wrong part scanned",
+        data: {
+          scan_result: "invalid",
+          error_type: "wrong_part",
+          mismatched_fields: mismatchedFields
+        }
+      });
+    }
+
+    let serialNumber = scannedText;
+
+    Object.values(validations).forEach(value => {
+      serialNumber = serialNumber.replace(value, "");
+    });
+
+    serialNumber = serialNumber.trim();
+
+    if (!serialNumber) {
+      return res.status(200).json({
+        status: "error",
+        code: 400,
+        message: "Unable to extract serial number from barcode",
+        data: "None"
+      });
+    }
+
+    if (transaction.serial_numbers.includes(serialNumber)) {
+      return res.status(200).json({
+        status: "error",
+        code: 400,
+        message: "Duplicate barcode",
+        data: {
+          scan_result: "duplicate",
+          error_type: "duplicate_barcode",
+          serial_number: serialNumber
+        }
+      });
+    }
+
+    transaction.serial_numbers.push(serialNumber);
+    await transaction.save();
+
+    const scannedCount = transaction.serial_numbers.length;
+    console.log(scannedCount);
+    
+    const remaining = part.tag_quantity - scannedCount;
+
+    return res.status(200).json({
+      status: "success",
+      code: 200,
+      message: "Scan recorded successfully",
+      data: {
+        scan_result: "valid",
+        serial_number: serialNumber,
+        scanned_count: scannedCount,
+        remaining,
+        progress_percentage: Number(
+          ((scannedCount / part.tag_quantity) * 100).toFixed(2)
+        ),
+        is_complete: scannedCount === part.tag_quantity
+      }
+    });
+
+  } catch (error) {
+    return res.status(200).json({
+      status: "error",
+      code: 500,
+      message: error.message,
+      data: "None"
+    });
+  }
+};
+
+
+export const getPendingTransaction = async (req, res) => {
+  try {
+    const transactions = await Transaction.find({
+      is_completed: false,
+      isDeleted: false
+    });
+
+    if (!transactions.length) {
+      return res.status(200).json({
+        status: "success",
+        code: 200,
+        message: "No active transactions",
+        data: []
+      });
+    }
+
+    const partIds = transactions.map(t => t.part_id);
+
+    const parts = await Part.find({ part_id: { $in: partIds } });
+
+    const partMap = {};
+    parts.forEach(p => {
+      partMap[p.part_id] = p;
+    });
+
+    const responseData = transactions.map(transaction => {
+      const part = partMap[transaction.part_id];
+
+      return {
+        transaction_id: transaction.transaction_id,
+        part_number: transaction.part_number,
+        part_name: transaction.part_name,
+        type: part?.type || null,
+        required_quantity: part?.tag_quantity || 0,
+        scanned: transaction.serial_numbers.length,
+        scanned_barcodes: transaction.serial_numbers,
+        created_at: transaction.createdAt
+      };
+    });
+
+    return res.status(200).json({
+      status: "success",
+      code: 200,
+      message: "Active transactions found",
+      data: responseData
+    });
+
+  } catch (error) {
+    return res.status(200).json({
+      status: "error",
+      code: 500,
+      message: error.message,
+      data: "None"
+    });
+  }
+};
+
+export const restartScan = async (req, res) => {
+  try {
+    const { transaction_id,user_id, scanned_at } = req.body;
+
+    if (!transaction_id || !user_id) {
+      return res.status(200).json({
+        status: "error",
+        code: 400,
+        message: "transaction_id and user_id are required",
+        data: "None"
+      });
+    }
+
+    const transaction = await Transaction.findOne({
+      transaction_id,
+      isDeleted: false
+    });
+
+    if (!transaction) {
+      return res.status(200).json({
+        status: "error",
+        code: 404,
+        message: "Transaction not found",
+        data: "None"
+      });
+    }
+
+    if (transaction.is_completed) {
+      return res.status(200).json({
+        status: "error",
+        code: 400,
+        message: "Completed transaction cannot be restarted",
+        data: "None"
+      });
+    }
+
+    const part = await Part.findOne({ part_id: transaction.part_id });
+    if (!part) {
+      return res.status(200).json({
+        status: "error",
+        code: 404,
+        message: "Part not found",
+        data: "None"
+      });
+    }
+
+    transaction.serial_numbers = [];
+    transaction.last_restarted_by = user_id;
+    transaction.last_restarted_at = scanned_at
+      ? new Date(scanned_at)
+      : new Date();
+
+    await transaction.save();
+
+    const scannedCount = transaction.serial_numbers.length;
+    const remaining = part.tag_quantity;
+
+    return res.status(200).json({
+      status: "success",
+      code: 200,
+      message: "Scan restarted successfully",
+      data: {
+        scan_result: "valid",
+        scanned_count: scannedCount,
+        remaining,
+        progress_percentage: 0,
+        is_complete: false
+      }
+    });
+
+  } catch (error) {
+    return res.status(200).json({
+      status: "error",
+      code: 500,
+      message: error.message,
+      data: "None"
+    });
+  }
+};
+
 
 export const printTransactionLabel = async (req, res) => {
   try {

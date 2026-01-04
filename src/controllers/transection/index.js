@@ -1,7 +1,19 @@
 import * as service from "../../services/transection/index.js";
 
-export const createOrUpdateTransaction = (req, res) => {
-  return service.createOrUpdateTransaction(req, res);
+export const startTransaction = (req, res) => {
+  return service.startTransaction(req, res);
+};
+
+export const recordScan = (req, res) => {
+  return service.recordScan(req, res);
+};
+
+export const getPendingTransaction = (req, res) => {
+  return service.getPendingTransaction(req, res);
+};
+
+export const restartScan = (req, res) => {
+  return service.restartScan(req, res);
 };
 
 // export const printTransactionLabel = (req, res) => {

@@ -1,19 +1,24 @@
 import express from "express";
 import {
-  createOrUpdateTransaction,
+  startTransaction,
   listTransactions,
   getTransactionById,
   deleteTransaction,
   filterTransactions,
   searchTransactions,
-  
+  recordScan,
+  getPendingTransaction,
+  restartScan
 } from "../controllers/transection/index.js";
 
 import {generateTransactionReport} from "../controllers/report/index.js"
 
 const router = express.Router();
 
-router.post("/create", createOrUpdateTransaction);
+router.post("/start", startTransaction);
+router.post("/recordScan", recordScan);
+router.get("/getPending", getPendingTransaction);
+router.post("/restartScan", restartScan);
 router.get("/list", listTransactions);
 router.get("/filter", filterTransactions);
 router.get("/search", searchTransactions);

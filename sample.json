@@ -1,0 +1,83 @@
+{
+  "info": {
+    "name": "Transaction Scan APIs",
+    "description": "Postman collection for transaction scan workflow",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000/api"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Start Transaction Scan",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"user_id\": \"U001\",\n  \"part_id\": \"PART001\",\n  \"part_number\": \"P001\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/transactions/start/scan/start",
+          "host": ["{{base_url}}"],
+          "path": ["transactions", "start", "scan", "start"]
+        }
+      }
+    },
+    {
+      "name": "2. Record Scan",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transaction_id\": \"T001\",\n  \"barcode\": \"OV24 RR RH 9850142880 MI-4W-7749\",\n  \"user_id\": \"U001\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/transactions/T001/scan/record",
+          "host": ["{{base_url}}"],
+          "path": ["transactions", "T001", "scan", "record"]
+        }
+      }
+    },
+    {
+      "name": "3. Restart Scan",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"user_id\": \"U001\",\n  \"scanned_at\": \"2026-01-01T10:30:00Z\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/transactions/T001/scan/re-start",
+          "host": ["{{base_url}}"],
+          "path": ["transactions", "T001", "scan", "re-start"]
+        }
+      }
+    },
+    {
+      "name": "4. Get Pending Transactions",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/transactions/scan/pending",
+          "host": ["{{base_url}}"],
+          "path": ["transactions", "scan", "pending"]
+        }
+      }
+    }
+  ]
+}

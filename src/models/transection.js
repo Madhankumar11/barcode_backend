@@ -40,6 +40,22 @@ const transactionSchema = new mongoose.Schema(
       type:Boolean,
       default:false
     },
+     required_quantity: {
+      type: Number,
+      default: 0
+    },
+      scanned_quantity: {
+      type: Number,
+    },
+      scanned_barcodes: {
+      type: [String],
+      default: []
+    },
+
+    serial_numbers: {
+      type: [String],
+      default: []
+    },
 
     createdBy: {
       type: String, // user_id
