@@ -16,9 +16,9 @@ export const restartScan = (req, res) => {
   return service.restartScan(req, res);
 };
 
-// export const printTransactionLabel = (req, res) => {
-//   return service.printTransactionLabel(req, res);
-// };
+export const printLabelByTransactionId = (req, res) => {
+  return service.printLabelByTransactionId(req, res);
+};
 
 export const listTransactions = (req, res) => {
   return service.listTransactions(req, res);

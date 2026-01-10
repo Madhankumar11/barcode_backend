@@ -2,12 +2,13 @@
 import express from "express";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
-
 import partRoutes from "./routes/part.js";
 import typeRoutes from "./routes/type.js";
 import userRoutes from "./routes/user.js";
 import transactionRoutes from "./routes/transaction.js";
 import cors from "cors"
+import "./cron/dailyReportCron.js";
+
 
 dotenv.config();
 connectDB();
@@ -22,6 +23,7 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"]
   })
 );
+
 
 app.use("/api/parts", partRoutes);
 app.use("/api/types", typeRoutes);

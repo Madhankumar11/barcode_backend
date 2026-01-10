@@ -7,6 +7,7 @@ import Part from "../../models/part.js";
 import Transaction from "../../models/transection.js"
 import { createCanvas, loadImage } from "canvas";
 import { log } from "console";
+import { buildLabelTSPL } from "../../utility/tsplPrinter.js";
 
 const normalize = (str = "") =>
   str.replace(/\s+/g, " ").trim().toUpperCase();
@@ -16,7 +17,7 @@ export const startTransaction = async (req, res) => {
   try {
     const { user_id, part_id, part_number } = req.body;
 
-    if (!user_id || !part_id || !part_number) {
+    if (!user_id  || !part_id || !part_number) {
       return res.status(200).json({
         status: "error",
         code: 400,
@@ -34,7 +35,8 @@ export const startTransaction = async (req, res) => {
         data: "None"
       });
     }
-
+    
+    const user_code = user.user_code;
     const part = await Part.findOne({ part_id, part_number, isDeleted: false });
     if (!part) {
       return res.status(200).json({
@@ -54,6 +56,8 @@ export const startTransaction = async (req, res) => {
       minda_number: part.minda_number,
       required_quantity: part.tag_quantity,
       type: part.type,
+      user_id,
+      user_code,
       scanned_quantity: 0,
       scanned_barcodes: [],
       serial_numbers: [],
@@ -69,7 +73,7 @@ export const startTransaction = async (req, res) => {
         transaction_id: transaction.transaction_id,
         part_number: part.part_number,
         part_name: part.part_name,
-        minda_number:part.minda_number,
+        minda_number: part.minda_number,
         type: part.type,
         required_quantity: part.tag_quantity,
         scanned: 0,
@@ -152,11 +156,7 @@ export const recordScan = async (req, res) => {
         status: "error",
         code: 400,
         message: "Wrong part scanned",
-        data: {
-          scan_result: "invalid",
-          error_type: "wrong_part",
-          mismatched_fields: mismatchedFields
-        }
+        data: null
       });
     }
 
@@ -191,12 +191,17 @@ export const recordScan = async (req, res) => {
     }
 
     transaction.serial_numbers.push(serialNumber);
+
+
+    transaction.scanned_quantity = transaction.serial_numbers.length;
+    transaction.is_completed = transaction.scanned_quantity === part.tag_quantity;
+    transaction.remaining_count = part.tag_quantity - transaction.scanned_quantity;
+
     await transaction.save();
 
-    const scannedCount = transaction.serial_numbers.length;
-    console.log(scannedCount);
-    
-    const remaining = part.tag_quantity - scannedCount;
+    console.log("Scanned:", transaction.scanned_quantity);
+    console.log("Remaining:", transaction.remaining_count);
+
 
     return res.status(200).json({
       status: "success",
@@ -205,12 +210,12 @@ export const recordScan = async (req, res) => {
       data: {
         scan_result: "valid",
         serial_number: serialNumber,
-        scanned_count: scannedCount,
-        remaining,
+        scanned_count: transaction.scanned_quantity,
+        remaining: transaction.remaining_count,
         progress_percentage: Number(
-          ((scannedCount / part.tag_quantity) * 100).toFixed(2)
+          ((transaction.scanned_count / part.tag_quantity) * 100).toFixed(2)
         ),
-        is_complete: scannedCount === part.tag_quantity
+        is_complete: transaction.scanned_quantity === part.tag_quantity
       }
     });
 
@@ -284,7 +289,7 @@ export const getPendingTransaction = async (req, res) => {
 
 export const restartScan = async (req, res) => {
   try {
-    const { transaction_id,user_id, scanned_at } = req.body;
+    const { transaction_id, user_id, scanned_at } = req.body;
 
     if (!transaction_id || !user_id) {
       return res.status(200).json({
@@ -357,6 +362,78 @@ export const restartScan = async (req, res) => {
       status: "error",
       code: 500,
       message: error.message,
+      data: "None"
+    });
+  }
+};
+
+export const printLabelByTransactionId = async (req, res) => {
+  try {
+    const { transaction_id } = req.body;
+    const txn = await Transaction.findOne({ transaction_id });
+    if (!txn) {
+      return res.status(200).json({
+        status: "error",
+        code: 404,
+        message: "Transaction not found",
+        data: "None"
+      });
+    }
+
+    const {
+      minda_number,
+      part_number,
+      part_name,
+      quantity,
+      serial_number
+    } = txn;
+
+
+    const getTodayDate = () => {
+      const today = new Date();
+      const dd = String(today.getDate()).padStart(2, "0");
+      const mm = String(today.getMonth() + 1).padStart(2, "0");
+      const yyyy = today.getFullYear();
+      return `${dd}/${mm}/${yyyy}`;
+    };
+
+
+    const inspection_date = getTodayDate();
+
+    const qrData = JSON.stringify({
+      txn: transaction_id,
+      minda: minda_number,
+      part: part_number,
+      qty: quantity,
+      serials: serial_number
+    });
+
+    const tspl = buildLabelTSPL({
+      minda_number,
+      part_number,
+      part_name,
+      quantity,
+      inspection_date,
+      qrData
+    });
+
+    fs.writeFileSync("\\\\localhost\\TSC TE210", tspl);
+
+    console.log("Label sent to printer");
+    return res.status(200).json({
+      status: "success",
+      code: 200,
+      message: "Label printed successfully",
+      data: { transaction_id }
+    });
+
+  } catch (err) {
+    console.log(err, "err");
+
+    return res.status(200).json({
+      status: "error",
+      code: 500,
+      message: err.message,
       data: "None"
     });
   }
@@ -474,7 +551,7 @@ export const listTransactions = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ user_id, isActive: true });
+    const user = await User.findOne({ user_id, isActive: true, is_completed:true });
     if (!user || !user.permissions?.createTransaction) {
       return res.status(200).json({
         status: "error",

@@ -2,13 +2,15 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
 import User from "../../../models/user.js";
+import axios from "axios";
 
+const JAVA_BASE_URL = "http://localhost:8080";
 
 export const registerUser = async (req, res) => {
   try {
     const {
       user_name,
-      email,
+      user_code,
       password,
       biometric_id,
       role,
@@ -18,12 +20,12 @@ export const registerUser = async (req, res) => {
       permissions
     } = req.body;
 
-    if (!email || !role || !department || !phoneNumber || !createdBy || !user_name) {
+    if (!user_code || !role || !department || !phoneNumber || !createdBy || !user_name) {
       return res.status(200).json({
         status: "error",
         code: 400,
         message:
-          "email, role, department, user_name, phoneNumber and createdBy are required",
+          "user_code, role, department, user_name, phoneNumber and createdBy are required",
         data: "None"
       });
     }
@@ -38,7 +40,7 @@ export const registerUser = async (req, res) => {
     }
 
     const creator = await User.findOne({
-      user_name: createdBy,
+      user_code: createdBy,
       isActive: true
     });
 
@@ -51,12 +53,12 @@ export const registerUser = async (req, res) => {
       });
     }
 
-    const existingUser = await User.findOne({ email,isDeleted:false });
+    const existingUser = await User.findOne({ user_code, isDeleted: false });
     if (existingUser) {
       return res.status(200).json({
         status: "error",
         code: 409,
-        message: "User already exists with this email",
+        message: "User already exists with this user_code",
         data: "None"
       });
     }
@@ -72,14 +74,13 @@ export const registerUser = async (req, res) => {
 
     const finalPermissions = {
       createUser:
-        !!permissions?.createUser && !!creator.permissions?.createUser,
+         !!permissions?.createUser && !!creator.permissions?.createUser,
 
       createType:
         !!permissions?.createType && !!creator.permissions?.createType,
 
       createTransaction:
-        !!permissions?.createTransaction &&
-        !!creator.permissions?.createTransaction,
+        !!permissions?.createTransaction && !!creator.permissions?.createTransaction,
 
       createPart:
         !!permissions?.createPart && !!creator.permissions?.createPart
@@ -88,7 +89,7 @@ export const registerUser = async (req, res) => {
     const user = await User.create({
       user_id: `user_${uuidv4()}`,
       user_name,
-      email,
+      user_code,
       password: hashedPassword,
       biometric_id,
       login_type,
@@ -107,7 +108,7 @@ export const registerUser = async (req, res) => {
       data: {
         user_id: user.user_id,
         name: user.user_name,
-        email: user.email,
+        user_code: user.user_code,
         login_type: user.login_type,
         role: user.role,
         department: user.department,
@@ -116,6 +117,8 @@ export const registerUser = async (req, res) => {
       }
     });
   } catch (error) {
+    console.log(error,"error");
+    
     return res.status(500).json({
       status: "error",
       code: 500,
@@ -129,7 +132,6 @@ export const registerUser = async (req, res) => {
 export const updateUser = async (req, res) => {
   try {
     const {
-      user_id,
       user_name,
       password,
       biometric_id,
@@ -140,7 +142,9 @@ export const updateUser = async (req, res) => {
       updatedBy
     } = req.body;
 
-    if (!user_id || !updatedBy) {
+    const {id} = req.query;
+
+    if (!id || !updatedBy) {
       return res.status(200).json({
         status: "error",
         code: 400,
@@ -149,7 +153,7 @@ export const updateUser = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ user_id, isActive: true });
+    const user = await User.findOne({ user_id: id , isActive: true });
     if (!user) {
       return res.status(200).json({
         status: "error",
@@ -159,7 +163,7 @@ export const updateUser = async (req, res) => {
       });
     }
 
-    const updater = await User.findOne({ user_name: updatedBy, isActive: true });
+    const updater = await User.findOne({ user_code: updatedBy, isActive: true });
     if (!updater) {
       return res.status(200).json({
         status: "error",
@@ -224,6 +228,37 @@ export const updateUser = async (req, res) => {
 
     await user.save();
 
+    const finger_id = user.biometric_id;
+    console.log("TestFinger",finger_id);
+    
+
+    if (finger_id || finger_id !== biometric_id ) {
+      console.log(finger_id,"finger_id");
+      
+      try {
+        const fid = finger_id.replace("BIO_", "");
+        const resp = await axios.get(
+          `${JAVA_BASE_URL}/delete?id=${fid}`,
+          { timeout: 50000 }
+        );
+
+        console.log("Biometric delete response:", resp.data);
+
+        if (resp.data?.status !== "success") {
+          console.warn(
+            `Biometric delete failed for user ${id}, fid ${fid}`
+          );
+        }
+
+      } catch (bioErr) {
+        console.error(
+          `Java biometric service error for user ${id}:`,
+          bioErr.message
+        );
+      }
+    }
+
+
     return res.status(200).json({
       status: "success",
       code: 200,
@@ -231,7 +266,7 @@ export const updateUser = async (req, res) => {
       data: {
         user_id: user.user_id,
         name: user.user_name,
-        email: user.email,
+        user_code: user.user_code,
         login_type: user.login_type,
         role: user.role,
         department: user.department,
@@ -252,21 +287,24 @@ export const updateUser = async (req, res) => {
 
 export const loginUser = async (req, res) => {
   try {
-    const { login_type, email, password, biometric_id } = req.body;
+    const { login_type, user_code, password, biometric_id } = req.body;
 
     let user;
 
     if (login_type === "manual") {
-      if (!email || !password) {
+      if (!user_code || !password) {
         return res.status(200).json({
+
+
+
           status: "error",
           code: 400,
-          message: "email and password are required for manual login",
+          message: "user_code and password are required for manual login",
           data: "None"
         });
       }
 
-      user = await User.findOne({ email, isActive: true });
+      user = await User.findOne({ user_code, isActive: true });
 
       if (!user || !user.password) {
         return res.status(200).json({
@@ -325,7 +363,7 @@ export const loginUser = async (req, res) => {
     const accessToken = jwt.sign(
       {
         user_id: user.user_id,
-        email: user.email,
+        user_code: user.user_code,
         name: user.name,
         department: user.department,
         role: user.role,
@@ -397,7 +435,7 @@ export const refreshAccessToken = async (req, res) => {
     }
 
     const newAccessToken = jwt.sign(
-      { user_id: user.user_id, email: user.email, user_name:user.user_name, department:user.department  },
+      { user_id: user.user_id, user_code: user.user_code, user_name:user.user_name, department:user.department  },
       process.env.JWT_SECRET,
       { expiresIn: "15m" }
     );
@@ -425,13 +463,13 @@ export const refreshAccessToken = async (req, res) => {
 
 export const forgotPassword = async (req, res) => {
   try {
-    const { email, newPassword } = req.body;
+    const { user_code, newPassword } = req.body;
 
-    if (!email || !newPassword) {
+    if (!user_code || !newPassword) {
       return res.status(200).json({
         status: "error",
         code: 400,
-        message: "email and newPassword are required",
+        message: "user_code and newPassword are required",
         data: "None"
       });
     }
@@ -439,7 +477,7 @@ export const forgotPassword = async (req, res) => {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     const user = await User.findOneAndUpdate(
-      { email, login_type: "manual" },
+      { user_code, login_type: "manual" },
       { password: hashedPassword },
       { new: true }
     );
@@ -472,9 +510,9 @@ export const forgotPassword = async (req, res) => {
 
 export const changePassword = async (req, res) => {
   try {
-    const { email, oldPassword, newPassword } = req.body;
+    const { user_code, oldPassword, newPassword } = req.body;
 
-    const user = await User.findOne({ email, login_type: "manual" });
+    const user = await User.findOne({ user_code, login_type: "manual" });
 
     if (!user) {
       return res.status(200).json({
@@ -517,10 +555,10 @@ export const changePassword = async (req, res) => {
 
 export const getUserById = async (req, res) => {
   try {
-    const { user_id } = req.query;
+    const { id } = req.query;
 
     const user = await User.findOne(
-      { user_id, isActive: true },
+      { user_id: id, isActive: true ,isDeleted: false},
       { password: 0 }
     );
 
@@ -549,43 +587,7 @@ export const getUserById = async (req, res) => {
   }
 };
 
-export const deleteUser = async (req, res) => {
-  try {
-    const { user_id } = req.query;
 
-    const user = await User.findOneAndUpdate(
-      { user_id, isActive: true },
-      {
-        isActive: false,
-        isDeleted: true
-      },
-      { new: true }
-    );
-
-    if (!user) {
-      return res.status(200).json({
-        status: "error",
-        code: 404,
-        message: "User not found or already deleted",
-        data: "None"
-      });
-    }
-
-    return res.status(200).json({
-      status: "success",
-      code: 200,
-      message: "User deleted successfully",
-      data: "None"
-    });
-  } catch (error) {
-    return res.status(500).json({
-      status: "error",
-      code: 500,
-      message: error.message,
-      data: "None"
-    });
-  }
-};
 
 export const listUsers = async (req, res) => {
   try {
@@ -595,7 +597,8 @@ export const listUsers = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const filter = {
-      isActive: true
+      isActive: true,
+      isDeleted: false
     };
 
     const [users, total] = await Promise.all([
@@ -628,6 +631,172 @@ export const listUsers = async (req, res) => {
       status: "error",
       code: 500,
       message: error.message,
+      data: "None"
+    });
+  }
+};
+
+export const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.query;
+
+    if (!id) {
+      return res.status(400).json({
+        status: "error",
+        code: 400,
+        message: "User id is required",
+        data: "None"
+      });
+    }
+
+    const user = await User.findOneAndUpdate(
+      { user_id: id, isActive: true, isDeleted: false },
+      {
+        isActive: false,
+        isDeleted: true
+      },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        status: "error",
+        code: 404,
+        message: "User not found or already deleted",
+        data: "None"
+      });
+    }
+
+    const { biometric_id } = user;
+
+    if (biometric_id) {
+      try {
+        const fid = biometric_id.replace("BIO_", "");
+
+        const resp = await axios.get(
+          `${JAVA_BASE_URL}/delete?id=${fid}`,
+          { timeout: 50000 }
+        );
+
+        console.log("Biometric delete response:", resp.data);
+
+        if (resp.data?.status !== "success") {
+          console.warn(
+            `Biometric delete failed for user ${id}, fid ${fid}`
+          );
+        }
+
+      } catch (bioErr) {
+        console.error(
+          `Java biometric service error for user ${id}:`,
+          bioErr.message
+        );
+      }
+    }
+
+    return res.status(200).json({
+      status: "success",
+      code: 200,
+      message: "User deleted successfully",
+      data: "None"
+    });
+
+  } catch (error) {
+    console.error("Delete user error:", error);
+
+    return res.status(500).json({
+      status: "error",
+      code: 500,
+      message: error.message,
+      data: "None"
+    });
+  }
+};
+
+
+export const startRegister = async (req,res) => {
+  console.log("start");
+  
+  const resp = await axios.post(`${JAVA_BASE_URL}/register/start`);
+  
+   return res.status(200).json({
+      status: "success",
+      code: 200,
+      message: "Registration started successfully",
+      data: resp.data
+    });
+};
+
+export const startLogin = async (req,res) => {
+  const resp = await axios.post(`${JAVA_BASE_URL}/login/start`);
+  return res.status(200).json({
+      status: "success",
+      code: 200,
+      message: "Login started successfully",
+      data: resp.data
+    });
+};
+
+export const getStatus = async (req, res) => {
+  try {
+    const resp = await axios.get(`${JAVA_BASE_URL}/status`);
+    const data = resp.data;
+
+    if (data.status === "waiting") {
+      return res.status(200).json({
+        status: "success",
+        code: 200,
+        message: "Waiting for biometric input",
+        data: "None"
+      });
+    }
+
+    const user = await User.findOne({ biometric_id: data.biometric_id, isActive: true });
+
+    if (data.status === "success") {
+      return res.status(200).json({
+        status: "success",
+        code: 200,
+        message: "Biometric verification successful",
+        data: {
+          biometric_id: data.biometric_id,
+          user_code: user ? user.user_code : null
+        }
+      });
+    }
+
+    if (data.status === "duplicate") {
+      return res.status(200).json({
+        status: "error",
+        code: 409,
+        message: "Fingerprint already registered",
+        data: {
+          biometric_id: data.biometric_id
+        }
+      });
+    }
+
+    if (data.status === "error") {
+      return res.status(200).json({
+        status: "error",
+        code: 401,
+        message: "Biometric verification failed",
+        data: "None"
+      });
+    }
+
+    return res.status(500).json({
+      status: "error",
+      code: 500,
+      message: "Unknown biometric status",
+      data: data
+    });
+
+  } catch (err) {
+    return res.status(500).json({
+      status: "error",
+      code: 500,
+      message: err.message,
       data: "None"
     });
   }

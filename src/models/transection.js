@@ -36,6 +36,9 @@ const transactionSchema = new mongoose.Schema(
     user_id:{
       type:String
     },
+    user_code:{
+      type:String
+    },
     isDeleted:{
       type:Boolean,
       default:false

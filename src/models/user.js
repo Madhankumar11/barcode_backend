@@ -15,12 +15,16 @@ const userSchema = new mongoose.Schema(
     user_id: {
       type: String,
     },
+    isDeleted: {
+      type: Boolean,
+      default: false
+    },
 
     user_name: {
       type: String,
     },
 
-    email: {
+    user_code: {
       type: String,
     },
 
@@ -30,7 +34,6 @@ const userSchema = new mongoose.Schema(
 
     login_type: {
       type: String,
-      enum: ["manual", "biometric"],
     },
 
     biometric_id: {
@@ -54,6 +57,10 @@ const userSchema = new mongoose.Schema(
       default: {}
     },
 
+    is_completed: {
+      type: Boolean,
+      default: false
+    },
     createdBy: {
       type: String, 
     },

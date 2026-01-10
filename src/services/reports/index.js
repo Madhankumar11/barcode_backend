@@ -78,7 +78,7 @@ export const generateTransactionReport = async (req, res) => {
       });
     }
 
-    // await sendMailWithAttachment({
+    // sendMailWithAttachment({
     //   to: user.email,
     //   subject: "Transaction Barcode Report",
     //   text: "Please find attached the transaction barcode report.",

@@ -27,3 +27,14 @@ export const deleteUser = (req, res) =>
 export const listUsers = (req, res) =>
   service.listUsers(req, res);
 
+export const startRegister = (req, res) =>
+  service.startRegister(req, res);
+
+export const startLogin = (req, res) =>
+  service.startLogin(req, res);
+
+export const getStatus = (req, res) =>
+  service.getStatus(req, res);
+
+export const deleteBiometric = (req, res) =>
+  service.deleteBiometric(req, res);

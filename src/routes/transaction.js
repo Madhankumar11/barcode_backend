@@ -8,7 +8,8 @@ import {
   searchTransactions,
   recordScan,
   getPendingTransaction,
-  restartScan
+  restartScan,
+  printLabelByTransactionId
 } from "../controllers/transection/index.js";
 
 import {generateTransactionReport} from "../controllers/report/index.js"
@@ -25,5 +26,6 @@ router.get("/search", searchTransactions);
 router.get("/getByid", getTransactionById);
 router.delete("/delete", deleteTransaction);
 router.post("/report", generateTransactionReport)
+router.post("/printLabel", printLabelByTransactionId);
 
 export default router;
