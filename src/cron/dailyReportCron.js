@@ -11,13 +11,13 @@ const transporter = nodemailer.createTransport({
   port: 587,
   secure: false,
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
+    user: "dispatch_light-4w_chennai@unominda.com",
+    pass: "Iceage@321"
   }
 });
 
 
-cron.schedule("58 7 * * *", async () => {
+cron.schedule("05 18 * * *", async () => {
   try {
     console.log("Daily Scanning Report Cron Started");
   
@@ -27,7 +27,7 @@ cron.schedule("58 7 * * *", async () => {
       now.getFullYear(),
       now.getMonth(),
       now.getDate(),
-      8, 0, 0
+      19, 0, 0
     );
 
     const fromDate = new Date(toDate);

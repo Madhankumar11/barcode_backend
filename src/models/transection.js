@@ -24,6 +24,19 @@ const transactionSchema = new mongoose.Schema(
       default: []
     },
 
+    scan_logs: [
+    {
+      barcode: String,
+      serial_number: String,
+      scanned_by: String,
+      user_name:String,
+      scanned_at: {
+        type: Date,
+        default: Date.now
+      }
+    }
+  ],
+
     is_completed: {
       type: Boolean,
       default: false

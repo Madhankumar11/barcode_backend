@@ -8,6 +8,7 @@ import Transaction from "../../models/transection.js"
 import { createCanvas, loadImage } from "canvas";
 import { log } from "console";
 import { buildLabelTSPL } from "../../utility/tsplPrinter.js";
+import user from "../../models/user.js";
 
 const normalize = (str = "") =>
   str.replace(/\s+/g, " ").trim().toUpperCase();
@@ -130,6 +131,16 @@ export const recordScan = async (req, res) => {
       });
     }
 
+     const user = await User.findOne({ user_id: user_id });
+    if (!user) {
+      return res.status(200).json({
+        status: "error",
+        code: 404,
+        message: "User not found",
+        data: "None"
+      });
+    }
+
     const scannedText = normalize(barcode);
 
     const validations = {
@@ -160,13 +171,17 @@ export const recordScan = async (req, res) => {
       });
     }
 
-    let serialNumber = scannedText;
+    let serialNumber = null;
 
-    Object.values(validations).forEach(value => {
-      serialNumber = serialNumber.replace(value, "");
-    });
+   const match = scannedText.match(/(\d{6}).*?(\d{4})\s*$/);
 
-    serialNumber = serialNumber.trim();
+    if (match) {
+      const datePart = match[1];    
+      const serialPart = match[2];  
+
+      serialNumber = `${serialPart}-${datePart}`;
+    }
+
 
     if (!serialNumber) {
       return res.status(200).json({
@@ -191,6 +206,14 @@ export const recordScan = async (req, res) => {
     }
 
     transaction.serial_numbers.push(serialNumber);
+
+    transaction.scan_logs.push({
+      barcode,
+      serial_number: serialNumber,
+      user_code: user.user_code,
+      user_name:user.user_name,
+      scanned_at: new Date()
+    });
 
 
     transaction.scanned_quantity = transaction.serial_numbers.length;
@@ -384,8 +407,8 @@ export const printLabelByTransactionId = async (req, res) => {
       minda_number,
       part_number,
       part_name,
-      quantity,
-      serial_number
+      required_quantity,
+      serial_numbers
     } = txn;
 
 
@@ -404,15 +427,15 @@ export const printLabelByTransactionId = async (req, res) => {
       txn: transaction_id,
       minda: minda_number,
       part: part_number,
-      qty: quantity,
-      serials: serial_number
+      qty: required_quantity,
+      serials: serial_numbers
     });
 
     const tspl = buildLabelTSPL({
       minda_number,
       part_number,
       part_name,
-      quantity,
+      required_quantity,
       inspection_date,
       qrData
     });
@@ -816,3 +839,94 @@ export const searchTransactions = async (req, res) => {
   }
 };
 
+
+export const validateTransaction = async (req, res) => {
+  try {
+    const { transaction_id, barcode, user_id } = req.body;
+
+    if (!transaction_id || !barcode || !user_id) {
+      return res.status(400).json({
+        status: "error",
+        code: 400,
+        message: "Missing required fields",
+        data: {
+          scan_result: "invalid",
+          reason: "Required payload missing"
+        }
+      });
+    }
+
+    // 1️⃣ Validate user
+    const user = await User.findById(user_id);
+    if (!user) {
+      return res.status(404).json({
+        status: "error",
+        code: 404,
+        message: "Minda Part Scan Validation failed",
+        data: {
+          scan_result: "invalid",
+          reason: "User not found"
+        }
+      });
+    }
+
+    // 2️⃣ Fetch transaction
+    const transaction = await Transaction.findOne({ transaction_id });
+    if (!transaction) {
+      return res.status(404).json({
+        status: "error",
+        code: 404,
+        message: "Minda Part Scan Validation failed",
+        data: {
+          scan_result: "invalid",
+          reason: "Transaction not found"
+        }
+      });
+    }
+
+    // 3️⃣ Fields validation
+    const fieldsToValidate = [
+      "part_number",
+      "part_name",
+      "minda_number",
+      "type",
+      "serial_number"
+    ];
+
+    for (const field of fieldsToValidate) {
+      if (transaction[field] !== barcode[field]) {
+        return res.status(400).json({
+          status: "error",
+          code: 400,
+          message: "Minda Part Scan Validation failed",
+          data: {
+            scan_result: "invalid",
+            reason: `${field} mismatch`
+          }
+        });
+      }
+    }
+
+    // ✅ Success
+    return res.status(200).json({
+      status: "success",
+      code: 200,
+      message: "Minda Part Scan Validated successfully",
+      data: {
+        scan_result: "valid"
+      }
+    });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      status: "error",
+      code: 500,
+      message: "Internal server error",
+      data: {
+        scan_result: "invalid",
+        reason: "Server error"
+      }
+    });
+  }
+};

@@ -555,10 +555,10 @@ export const changePassword = async (req, res) => {
 
 export const getUserById = async (req, res) => {
   try {
-    const { id } = req.query;
+    const { user_id } = req.query;
 
     const user = await User.findOne(
-      { user_id: id, isActive: true ,isDeleted: false},
+      { user_id: user_id, isActive: true ,isDeleted: false},
       { password: 0 }
     );
 

@@ -40,6 +40,12 @@ export const searchTransactions = (req, res) => {
   return service.searchTransactions(req, res);
 };
 
+export const validateTransaction = (req, res) => {
+  return service.validateTransaction(req, res);
+};
+
+
+
 
 
 
