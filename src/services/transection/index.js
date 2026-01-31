@@ -306,6 +306,7 @@ export const getPendingTransaction = async (req, res) => {
     const responseData = transactions.map(transaction => {
       const part = partMap[transaction.part_id];
 
+      
       return {
         transaction_id: transaction.transaction_id,
         part_number: transaction.part_number,
@@ -314,6 +315,8 @@ export const getPendingTransaction = async (req, res) => {
         required_quantity: part?.tag_quantity || 0,
         scanned: transaction.serial_numbers.length,
         scanned_barcodes: transaction.serial_numbers,
+        isCompleted:transaction.is_completed,
+        isMindaDone:transaction.is_mindascan,
         created_at: transaction.createdAt
       };
     });

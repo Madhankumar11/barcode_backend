@@ -12,7 +12,7 @@ export const registerUser = async (req, res) => {
       user_name,
       user_code,
       password,
-      biometric,
+      biometric_id,
       role,
       department,
       phoneNumber,
@@ -134,7 +134,7 @@ export const updateUser = async (req, res) => {
     const {
       user_name,
       password,
-      biometric,
+      biometric_id,
       role,
       department,
       phoneNumber,
@@ -193,8 +193,8 @@ export const updateUser = async (req, res) => {
       user.password = await bcrypt.hash(password, 10);
     }
 
-    if (biometric !== undefined) {
-      user.biometric_id = biometric;
+    if (biometric_id !== undefined) {
+      user.biometric_id = biometric_id;
     }
 
     if (user.password && user.biometric_id) user.login_type = "manual_biometric";
@@ -232,7 +232,7 @@ export const updateUser = async (req, res) => {
     console.log("TestFinger",finger_id);
     
 
-    if (finger_id || finger_id !== biometric ) {
+    if (finger_id || finger_id !== biometric_id ) {
       console.log(finger_id,"finger_id");
       
       try {
