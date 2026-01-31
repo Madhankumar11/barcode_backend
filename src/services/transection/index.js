@@ -242,7 +242,7 @@ export const recordScan = async (req, res) => {
     transaction.is_completed = transaction.scanned_quantity === part.tag_quantity;
     transaction.remaining_count = part.tag_quantity - transaction.scanned_quantity;
 
-    // await transaction.save();
+    await transaction.save();
 
     console.log("Scanned:", transaction.scanned_quantity);
     console.log("Remaining:", transaction.remaining_count);
