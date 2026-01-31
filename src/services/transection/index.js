@@ -260,6 +260,7 @@ export const recordScan = async (req, res) => {
         progress_percentage: Number(
           ((transaction.scanned_count / part.tag_quantity) * 100).toFixed(2)
         ),
+        is_mindascan:transaction.is_mindascan || false,
         is_complete: transaction.scanned_quantity === part.tag_quantity
       }
     });
@@ -437,7 +438,7 @@ export const printLabelByTransactionId = async (req, res) => {
     } = txn;
    
     const partData = await Part.findOne(
-      { _id: part_id },
+      { part_id: part_id },
       { type: 1, _id: 0 }   
     );
 
