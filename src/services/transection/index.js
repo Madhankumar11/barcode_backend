@@ -9,6 +9,7 @@ import { createCanvas, loadImage } from "canvas";
 import { log } from "console";
 import { buildLabelTSPL } from "../../utility/tsplPrinter.js";
 import user from "../../models/user.js";
+import transection from "../../models/transection.js";
 
 const normalize = (str = "") =>
   str.replace(/\s+/g, " ").trim().toUpperCase();
@@ -18,7 +19,7 @@ export const startTransaction = async (req, res) => {
   try {
     const { user_id, part_id, part_number } = req.body;
 
-    if (!user_id  || !part_id || !part_number) {
+    if (!user_id || !part_id || !part_number) {
       return res.status(200).json({
         status: "error",
         code: 400,
@@ -36,8 +37,9 @@ export const startTransaction = async (req, res) => {
         data: "None"
       });
     }
-    
+
     const user_code = user.user_code;
+
     const part = await Part.findOne({ part_id, part_number, isDeleted: false });
     if (!part) {
       return res.status(200).json({
@@ -48,6 +50,14 @@ export const startTransaction = async (req, res) => {
       });
     }
 
+    const existingTransaction = await Transaction.findOne({
+      part_id,
+      is_completed: false
+    });
+
+    if (existingTransaction) {
+      await Transaction.deleteOne({ _id: existingTransaction._id });
+    }
 
     const transaction = await Transaction.create({
       transaction_id: uuidv4(),
@@ -92,6 +102,7 @@ export const startTransaction = async (req, res) => {
     });
   }
 };
+
 
 
 export const recordScan = async (req, res) => {
@@ -173,14 +184,25 @@ export const recordScan = async (req, res) => {
 
     let serialNumber = null;
 
-   const match = scannedText.match(/(\d{6}).*?(\d{4})\s*$/);
+  //  const match = scannedText.match(/(\d{6}).*?(\d{4})\s*$/);
+
+    // if (match) {
+    //   const datePart = match[1];    
+    //   const serialPart = match[2];  
+
+    //   serialNumber = `${serialPart}-${datePart}`;
+    // }
+
+    const match = barcode.match(/(\d{6})\s+([A-Z])\s+(\d{4})$/);
 
     if (match) {
-      const datePart = match[1];    
-      const serialPart = match[2];  
+      const dateRaw = match[1];   
+      const grade = match[2];    
+      const serial = match[3];   
 
-      serialNumber = `${serialPart}-${datePart}`;
-    }
+      serialNumber = `${serial}-${grade}-${dateRaw}`
+
+}
 
 
     if (!serialNumber) {
@@ -220,7 +242,7 @@ export const recordScan = async (req, res) => {
     transaction.is_completed = transaction.scanned_quantity === part.tag_quantity;
     transaction.remaining_count = part.tag_quantity - transaction.scanned_quantity;
 
-    await transaction.save();
+    // await transaction.save();
 
     console.log("Scanned:", transaction.scanned_quantity);
     console.log("Remaining:", transaction.remaining_count);
@@ -243,6 +265,8 @@ export const recordScan = async (req, res) => {
     });
 
   } catch (error) {
+    console.log(error,"error");
+    
     return res.status(200).json({
       status: "error",
       code: 500,
@@ -408,9 +432,16 @@ export const printLabelByTransactionId = async (req, res) => {
       part_number,
       part_name,
       required_quantity,
-      serial_numbers
+      serial_numbers,
+      part_id
     } = txn;
+   
+    const partData = await Part.findOne(
+      { _id: part_id },
+      { type: 1, _id: 0 }   
+    );
 
+    const type = partData?.type;
 
     const getTodayDate = () => {
       const today = new Date();
@@ -424,7 +455,7 @@ export const printLabelByTransactionId = async (req, res) => {
     const inspection_date = getTodayDate();
 
     const qrData = JSON.stringify({
-      txn: transaction_id,
+
       minda: minda_number,
       part: part_number,
       qty: required_quantity,
@@ -844,6 +875,7 @@ export const validateTransaction = async (req, res) => {
   try {
     const { transaction_id, barcode, user_id } = req.body;
 
+    // 1️⃣ Basic validation
     if (!transaction_id || !barcode || !user_id) {
       return res.status(400).json({
         status: "error",
@@ -856,8 +888,24 @@ export const validateTransaction = async (req, res) => {
       });
     }
 
-    // 1️⃣ Validate user
-    const user = await User.findById(user_id);
+    // 2️⃣ Parse barcode STRING → OBJECT
+    const parsedBarcode = parseBarcodeSafe(barcode);
+    if (!parsedBarcode) {
+      return res.status(400).json({
+        status: "error",
+        code: 400,
+        message: "Invalid barcode format",
+        data: {
+          scan_result: "invalid",
+          reason: "Barcode parsing failed"
+        }
+      });
+    }
+
+    const { minda, part, qty, serials } = parsedBarcode;
+
+    // 3️⃣ Validate user
+    const user = await User.findOne({ user_id });
     if (!user) {
       return res.status(404).json({
         status: "error",
@@ -870,7 +918,7 @@ export const validateTransaction = async (req, res) => {
       });
     }
 
-    // 2️⃣ Fetch transaction
+    // 4️⃣ Fetch transaction
     const transaction = await Transaction.findOne({ transaction_id });
     if (!transaction) {
       return res.status(404).json({
@@ -884,36 +932,65 @@ export const validateTransaction = async (req, res) => {
       });
     }
 
-    // 3️⃣ Fields validation
-    const fieldsToValidate = [
-      "part_number",
-      "part_name",
-      "minda_number",
-      "type",
-      "serial_number"
-    ];
-
-    for (const field of fieldsToValidate) {
-      if (transaction[field] !== barcode[field]) {
-        return res.status(400).json({
-          status: "error",
-          code: 400,
-          message: "Minda Part Scan Validation failed",
-          data: {
-            scan_result: "invalid",
-            reason: `${field} mismatch`
-          }
-        });
-      }
+    // 5️⃣ Field validation
+    if (transaction.minda_number !== minda) {
+      return res.status(400).json({
+        status: "error",
+        code: 400,
+        message: "Validation failed",
+        data: {
+          scan_result: "invalid",
+          reason: "Minda number mismatch"
+        }
+      });
     }
 
-    // ✅ Success
+    if (transaction.part_number !== part) {
+      return res.status(400).json({
+        status: "error",
+        code: 400,
+        message: "Validation failed",
+        data: {
+          scan_result: "invalid",
+          reason: "Part number mismatch"
+        }
+      });
+    }
+
+    if (transaction.required_quantity !== qty) {
+      return res.status(400).json({
+        status: "error",
+        code: 400,
+        message: "Validation failed",
+        data: {
+          scan_result: "invalid",
+          reason: "Quantity mismatch"
+        }
+      });
+    }
+
+    if (!Array.isArray(serials)) {
+      return res.status(400).json({
+        status: "error",
+        code: 400,
+        message: "Validation failed",
+        data: {
+          scan_result: "invalid",
+          reason: "Invalid serials format"
+        }
+      });
+    }
+
+    
+
+    // ✅ SUCCESS
     return res.status(200).json({
       status: "success",
       code: 200,
       message: "Minda Part Scan Validated successfully",
       data: {
-        scan_result: "valid"
+        scan_result: "valid",
+        total_serials: serials.length
       }
     });
 
@@ -930,3 +1007,36 @@ export const validateTransaction = async (req, res) => {
     });
   }
 };
+
+
+const parseBarcodeSafe = (barcodeStr) => {
+  try {
+    if (typeof barcodeStr !== "string") return null;
+
+    const mindaMatch = barcodeStr.match(/minda:([^,}]+)/);
+    const partMatch = barcodeStr.match(/part:([^,}]+)/);
+    const qtyMatch = barcodeStr.match(/qty:(\d+)/);
+    const serialsMatch = barcodeStr.match(/serials:\[([^\]]*)\]/);
+
+    if (!mindaMatch || !partMatch || !qtyMatch) return null;
+
+    const serials = serialsMatch
+      ? serialsMatch[1]
+          .split(",")
+          .map(s => s.trim())
+          .filter(Boolean)
+      : [];
+
+    return {
+      minda: mindaMatch[1].trim(),
+      part: partMatch[1].trim(),
+      qty: Number(qtyMatch[1]),
+      serials
+    };
+  } catch (err) {
+    console.error("Barcode parse error:", err);
+    return null;
+  }
+};
+
+

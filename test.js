@@ -7,17 +7,19 @@ dotenv.config();
 const sendMailWithAttachment = async () => {
   try {
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.unominda.com",
+      port: 465,
+      secure: true, // ✅ must be true for port 465
       auth: {
-        user: "madhankumarraja6@gmail.com",
-        pass: "bqpi mvvc uclg cfas", // ✅ App Password
+        user: process.env.SMTP_USER, // e.g. no-reply@unominda.com
+        pass: process.env.SMTP_PASS, // email password
       },
     });
 
     const mailOptions = {
-      from: `"Minda System" <${process.env.GMAIL_USER}>`,
-      to: "madhankumarraja6@gmail.com",
-      subject: "Test Mail with Attachment (Gmail)",
+      from: `"Minda System" <${process.env.SMTP_USER}>`,
+      to: "receiver@email.com",
+      subject: "Test Mail with Attachment (SMTP)",
       text: "Please find the attached file.",
       attachments: [
         {
@@ -28,10 +30,10 @@ const sendMailWithAttachment = async () => {
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log("✅ Gmail sent successfully:", info.messageId);
+    console.log("✅ Mail sent successfully:", info.messageId);
 
   } catch (error) {
-    console.error("❌ Error sending Gmail:", error);
+    console.error("❌ Error sending mail:", error);
   }
 };
 

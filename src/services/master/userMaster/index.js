@@ -12,7 +12,7 @@ export const registerUser = async (req, res) => {
       user_name,
       user_code,
       password,
-      biometric_id,
+      biometric,
       role,
       department,
       phoneNumber,
@@ -30,7 +30,7 @@ export const registerUser = async (req, res) => {
       });
     }
 
-    if (!password && !biometric_id) {
+    if (!password && !biometric) {
       return res.status(200).json({
         status: "error",
         code: 400,
@@ -69,8 +69,8 @@ export const registerUser = async (req, res) => {
     }
 
     let login_type = "manual";
-    if (password && biometric_id) login_type = "manual_biometric";
-    else if (biometric_id) login_type = "biometric";
+    if (password && biometric) login_type = "manual_biometric";
+    else if (biometric) login_type = "biometric";
 
     const finalPermissions = {
       createUser:
@@ -91,7 +91,7 @@ export const registerUser = async (req, res) => {
       user_name,
       user_code,
       password: hashedPassword,
-      biometric_id,
+      biometric_id:biometric,
       login_type,
       role,
       department,
@@ -134,7 +134,7 @@ export const updateUser = async (req, res) => {
     const {
       user_name,
       password,
-      biometric_id,
+      biometric,
       role,
       department,
       phoneNumber,
@@ -193,8 +193,8 @@ export const updateUser = async (req, res) => {
       user.password = await bcrypt.hash(password, 10);
     }
 
-    if (biometric_id !== undefined) {
-      user.biometric_id = biometric_id;
+    if (biometric !== undefined) {
+      user.biometric_id = biometric;
     }
 
     if (user.password && user.biometric_id) user.login_type = "manual_biometric";
@@ -232,7 +232,7 @@ export const updateUser = async (req, res) => {
     console.log("TestFinger",finger_id);
     
 
-    if (finger_id || finger_id !== biometric_id ) {
+    if (finger_id || finger_id !== biometric ) {
       console.log(finger_id,"finger_id");
       
       try {

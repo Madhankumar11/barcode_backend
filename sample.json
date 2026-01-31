@@ -1,83 +1,133 @@
 {
-  "info": {
-    "name": "Transaction Scan APIs",
-    "description": "Postman collection for transaction scan workflow",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-  },
-  "variable": [
+  "id": "Product_002032_1769652844989",
+  "products": [
     {
-      "key": "base_url",
-      "value": "http://localhost:3000/api"
-    }
-  ],
-  "item": [
-    {
-      "name": "1. Start Transaction Scan",
-      "request": {
-        "method": "POST",
-        "header": [
-          { "key": "Content-Type", "value": "application/json" }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"user_id\": \"U001\",\n  \"part_id\": \"PART001\",\n  \"part_number\": \"P001\"\n}"
-        },
-        "url": {
-          "raw": "{{base_url}}/transactions/start/scan/start",
-          "host": ["{{base_url}}"],
-          "path": ["transactions", "start", "scan", "start"]
+      "code": "04.037.125",
+      "approvalStatus": {
+        "code": "approved"
+      },
+      "catalogVersion": {
+        "version": "Staged",
+        "catalog": {
+          "id": "jnjSwitzerlandProductCatalog"
         }
-      }
+      },
+      "storageCondition": null,
+      "originCountry": null,
+      "sourceSystemId": "SAP_S4",
+      "businessSector": "M",
+      "uomDimensions": [
+        {
+          "code": "04.037.125|07611819650558|BX",
+          "ean": "07611819650558",
+          "denominator": "1",
+          "numerator": "2",
+          "altUom": {
+            "code": "BX"
+          },
+          "baseUnit": {
+            "code": "EA"
+          }
+        },
+        {
+          "code": "04.037.125|07611819650558|EA",
+          "ean": "07611819650558",
+          "denominator": "1",
+          "numerator": "1",
+          "altUom": {
+            "code": "EA"
+          },
+          "baseUnit": {
+            "code": "EA"
+          }
+        }
+      ],
+      "hazmatCode": "",
+      "materialBaseNum": "04.037.125",
+      "sapMaterialCode": "04.037.125",
+      "productCatalogCode": "04.037.125",
+      "localizedAttributes": [
+        {
+          "language": "EN",
+          "name": "TFNA Fem Nail ø11 le 125° L340 TiMo15"
+        },
+        {
+          "language": "DE",
+          "productBasicText": ""
+        },
+        {
+          "language": "EN",
+          "productBasicText": ""
+        },
+        {
+          "language": "FR",
+          "productBasicText": ""
+        }
+      ]
     },
     {
-      "name": "2. Record Scan",
-      "request": {
-        "method": "POST",
-        "header": [
-          { "key": "Content-Type", "value": "application/json" }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"transaction_id\": \"T001\",\n  \"barcode\": \"OV24 RR RH 9850142880 MI-4W-7749\",\n  \"user_id\": \"U001\"\n}"
+      "code": "04.037.125S",
+      "approvalStatus": {
+        "code": "approved"
+      },
+      "catalogVersion": {
+        "version": "Staged",
+        "catalog": {
+          "id": "jnjSwitzerlandProductCatalog"
+        }
+      },
+      "storageCondition": null,
+      "originCountry": null,
+      "sourceSystemId": "SAP_S4",
+      "businessSector": "M",
+      "uomDimensions": [
+        {
+          "code": "04.037.125S|07611819650351|BX",
+          "ean": "07611819650351",
+          "denominator": "1",
+          "numerator": "10",
+          "altUom": {
+            "code": "BX"
+          },
+          "baseUnit": {
+            "code": "EA"
+          }
         },
-        "url": {
-          "raw": "{{base_url}}/transactions/T001/scan/record",
-          "host": ["{{base_url}}"],
-          "path": ["transactions", "T001", "scan", "record"]
+        {
+          "code": "04.037.125S|07611819650350|EA",
+          "ean": "07611819650350",
+          "denominator": "1",
+          "numerator": "1",
+          "altUom": {
+            "code": "EA"
+          },
+          "baseUnit": {
+            "code": "EA"
+          }
         }
-      }
-    },
-    {
-      "name": "3. Restart Scan",
-      "request": {
-        "method": "POST",
-        "header": [
-          { "key": "Content-Type", "value": "application/json" }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"user_id\": \"U001\",\n  \"scanned_at\": \"2026-01-01T10:30:00Z\"\n}"
+      ],
+      "hazmatCode": "",
+      "materialBaseNum": "04.037.125S",
+      "sapMaterialCode": "04.037.125S",
+      "productCatalogCode": "04.037.125S",
+      "localizedAttributes": [
+        {
+          "language": "EN",
+          "name": "TFNA Fem Nail ø11 le 125° L340 TiMo15"
         },
-        "url": {
-          "raw": "{{base_url}}/transactions/T001/scan/re-start",
-          "host": ["{{base_url}}"],
-          "path": ["transactions", "T001", "scan", "re-start"]
+        {
+          "language": "DE",
+          "productBasicText": " DE - TFNA Fem Nail ø11 le 125° L340 TiMo15 Basic data text in English for test. TFNA Fem Nail ø11 le 125° L340 TiMo15 Basic data text in English for test. TFNA Fem Nail ø11 le 125° L340 TiMo15 Basic data text in English for test. TFNA Fem Nail ø11 le 125° L340 TiMo15 Basic data text in English for test. TFNA Fem Nail ø11 le 125° L340 TiMo15 Basic data text in English for test. TFNA Fem Nail ø11 le 125° L340 TiMo15 Basic data text in English for test. TFNA Fem Nail ø11 le 125° L340 TiMo15 Basic data text in English for test"
+        },
+        {
+          "language": "EN",
+          "productBasicText": " EN - TFNA Fem Nail ø11 le 125° L340 TiMo15 Basic data text in English for test. TFNA Fem Nail ø11 le 125° L340 TiMo15 Basic data text in English for test. TFNA Fem Nail ø11 le 125° L340 TiMo15 Basic data text in English for test. TFNA Fem Nail ø11 le 125° L340 TiMo15 Basic data text in English for test. TFNA Fem Nail ø11 le 125° L340 TiMo15 Basic data text in English for test. TFNA Fem Nail ø11 le 125° L340 TiMo15 Basic data text in English for test. TFNA Fem Nail ø11 le 125° L340 TiMo15 Basic data text in English for test"
+        },
+        {
+          "language": "FR",
+          "productBasicText": " FR - TFNA Fem Nail ø11 le 125° L340 TiMo15 Basic data text in English for test. TFNA Fem Nail ø11 le 125° L340 TiMo15 Basic data text in English for test. TFNA Fem Nail ø11 le 125° L340 TiMo15 Basic data text in English for test. TFNA Fem Nail ø11 le 125° L340 TiMo15 Basic data text in English for test. TFNA Fem Nail ø11 le 125° L340 TiMo15 Basic data text in English for test. TFNA Fem Nail ø11 le 125° L340 TiMo15 Basic data text in English for test. TFNA Fem Nail ø11 le 125° L340 TiMo15 Basic data text in English for test"
         }
-      }
-    },
-    {
-      "name": "4. Get Pending Transactions",
-      "request": {
-        "method": "GET",
-        "header": [
-          { "key": "Content-Type", "value": "application/json" }
-        ],
-        "url": {
-          "raw": "{{base_url}}/transactions/scan/pending",
-          "host": ["{{base_url}}"],
-          "path": ["transactions", "scan", "pending"]
-        }
-      }
+      ]
     }
   ]
 }

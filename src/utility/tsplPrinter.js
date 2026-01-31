@@ -9,7 +9,7 @@ export const buildLabelTSPL = ({
 }) => {
   
 
-return `SIZE 96 mm, 100.1 mm
+return `SIZE 96 mm, 150.1 mm
 GAP 3 mm, 0 mm
 DIRECTION 0,0
 REFERENCE 0,0
@@ -19,28 +19,36 @@ SET CUTTER OFF
 SET PARTIAL_CUTTER OFF
 SET TEAR ON
 CLS
-BOX 4,15,772,783,2
+
+BOX 4,25,772,1222,2
 CODEPAGE 1252
-TEXT 692,762,"ROMAN.TTF",180,1,14,"UNO MINDA"
-TEXT 476,762,"ROMAN.TTF",180,1,14,"- Lighting Division Chennai"
-BAR 5,711, 767, 2
-BAR 5,655, 767, 2
-BAR 5,599, 767, 2
-BAR 5,535, 767, 2
-BAR 5,471, 767, 2
-BAR 5,407, 767, 2
-BAR 388,407, 2, 304
-TEXT 756,700,"ROMAN.TTF",180,1,12,"Part Name"
-TEXT 756,644,"ROMAN.TTF",180,1,12,"Cus' Part No"
-TEXT 756,588,"ROMAN.TTF",180,1,12,"Minda Part No"
-TEXT 756,516,"ROMAN.TTF",180,1,12,"Data of Insp * PKG"
-TEXT 756,452,"ROMAN.TTF",180,1,12,"Box/Qty"
-TEXT 372,700,"ROMAN.TTF",180,1,12,"${sanitize(part_name)}"
-TEXT 373,644,"ROMAN.TTF",180,1,12,"${sanitize(part_number)}"
-TEXT 373,588,"ROMAN.TTF",180,1,12,"${sanitize(minda_number)}"
-TEXT 373,516,"ROMAN.TTF",180,1,12,"${inspection_date}"
-TEXT 373,452,"ROMAN.TTF",180,1,12,"${required_quantity}/81"
-QRCODE 700,386,L,4,A,180,M2,S7,"${sanitize(qrData)}"
+
+TEXT 692,1190,"ROMAN.TTF",180,1,16,"UNO MINDA"
+TEXT 430,1190,"ROMAN.TTF",180,1,14,"- Lighting Division Chennai"
+
+BAR 5,1110,767,2
+BAR 5,1030,767,2
+BAR 5,950,767,2
+BAR 5,870,767,2
+BAR 5,790,767,2
+BAR 5,710,767,2
+
+BAR 388,710,2,400
+
+TEXT 756,1070,"ROMAN.TTF",180,1,12,"Part Name"
+TEXT 756,990,"ROMAN.TTF",180,1,12,"Cus' Part No"
+TEXT 756,910,"ROMAN.TTF",180,1,12,"Minda Part No"
+TEXT 756,830,"ROMAN.TTF",180,1,12,"Date of Insp * PKG"
+TEXT 756,750,"ROMAN.TTF",180,1,12,"Box/Qty"
+
+TEXT 373,1070,"ROMAN.TTF",180,1,12,"${sanitize(part_name)}"
+TEXT 373,990,"ROMAN.TTF",180,1,12,"${sanitize(part_number)}"
+TEXT 373,910,"ROMAN.TTF",180,1,12,"${sanitize(minda_number)}"
+TEXT 373,830,"ROMAN.TTF",180,1,12,"${inspection_date}"
+TEXT 373,750,"ROMAN.TTF",180,1,12,"${required_quantity}/81"
+
+QRCODE 700,620,L,5,A,180,M2,S7,"${sanitize(qrData)}"
+
 PRINT 1,1
 `;
 

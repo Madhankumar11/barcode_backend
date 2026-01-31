@@ -6,18 +6,19 @@ export const generateExcelReport = async (transactions) => {
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet("Daily Scanning Report");
 
- 
   sheet.columns = [
     { header: "Sr No.", key: "srNo", width: 8 },
-    { header: "Customer part number", key: "customerPartNumber", width: 35 },
+    { header: "Customer part number", key: "customerPartNumber", width: 40 },
     { header: "Minda partnumber", key: "mindaPartNumber", width: 20 },
     { header: "Scanning Date", key: "scanningDate", width: 15 },
     { header: "Scanning Time", key: "scanningTime", width: 15 },
     { header: "Scanning QTY", key: "scanningQty", width: 15 },
-    { header: "User ID", key: "userId", width: 20 }
+    { header: "UserCode", key: "user_code", width: 20 },
+    { header: "UserName", key: "user_name", width: 20 }
+
   ];
 
-  // Header Styling
+  // 🔹 Header styling
   sheet.getRow(1).eachCell(cell => {
     cell.font = { bold: true };
     cell.alignment = { vertical: "middle", horizontal: "center" };
@@ -29,20 +30,30 @@ export const generateExcelReport = async (transactions) => {
     };
   });
 
-  transactions.forEach((t, index) => {
-    const createdDate = new Date(t.createdAt);
+  let srNo = 1;
 
-    sheet.addRow({
-      srNo: index + 1,
-      customerPartNumber: t.part_number,
-      mindaPartNumber: t.minda_number,
-      scanningDate: createdDate.toISOString().split("T")[0],
-      scanningTime: createdDate.toTimeString().split(" ")[0],
-      scanningQty: t.required_quantity || 1,
-      userId: t.user_code        // ✅ UPDATED FIELD
+  transactions.forEach(transaction => {
+    let runningQty = 0;
+
+    transaction.scan_logs.forEach(scan => {
+      runningQty += 1;
+
+      const scannedAt = new Date(scan.scanned_at);
+
+      sheet.addRow({
+        srNo: srNo++,
+        customerPartNumber: scan.barcode,         
+        mindaPartNumber: transaction.minda_number, 
+        scanningDate: scannedAt.toISOString().split("T")[0],
+        scanningTime: scannedAt.toTimeString().split(" ")[0],
+        scanningQty: runningQty,                    
+        user_code: scan.user_code,
+        user_name: scan.user_name                      
+      });
     });
   });
 
+  // 🔹 Cell styling
   sheet.eachRow((row, rowNumber) => {
     if (rowNumber !== 1) {
       row.eachCell(cell => {
