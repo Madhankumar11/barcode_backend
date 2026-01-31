@@ -315,8 +315,8 @@ export const getPendingTransaction = async (req, res) => {
         required_quantity: part?.tag_quantity || 0,
         scanned: transaction.serial_numbers.length,
         scanned_barcodes: transaction.serial_numbers,
-        isCompleted:transaction.is_completed,
-        isMindaDone:transaction.is_mindascan,
+        is_completed:transaction.is_completed,
+        is_mindascan:transaction.is_mindascan,
         created_at: transaction.createdAt
       };
     });
