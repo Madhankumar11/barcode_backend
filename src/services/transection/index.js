@@ -280,7 +280,7 @@ export const recordScan = async (req, res) => {
 export const getPendingTransaction = async (req, res) => {
   try {
     const transactions = await Transaction.find({
-      is_completed: false,
+      is_mindascan: false,
       isDeleted: false
     });
 
@@ -605,7 +605,7 @@ export const listTransactions = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ user_id, isActive: true, is_completed:true });
+    const user = await User.findOne({ user_id, isActive: true, is_completed:true , is_mindascan:true });
     if (!user || !user.permissions?.createTransaction) {
       return res.status(200).json({
         status: "error",

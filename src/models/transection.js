@@ -41,6 +41,10 @@ const transactionSchema = new mongoose.Schema(
       type: Boolean,
       default: false
     },
+    is_mindascan: {
+      type: Boolean,
+      default: false
+    },
 
     isActive: {
       type: Boolean,
